@@ -119,3 +119,10 @@ documented rollback (stops services, extracts archive, restarts services).
   `backup.yml` archives whichever exist and `restore.yml` only wipes a `9router` dir the archive replaces.
   The 2026-10-10 archive predates this fix; its 9router data is in `backups/pai-9router-srv-20261011.tar.zst`.
 - Verified: HERMES_UID/GID honored (entrypoint logs "Changing hermes UID to 1003"); paseo healthcheck passes.
+- Butler review queue now runs through the container. `butler-review-queue.service` runs as `ubuntu` (docker group; `hermes`
+  has no docker access) and `scripts/butler-review-queue.sh` does the pending-count gate and `hermes -p librarian chat`
+  via `docker exec -u hermes hermes-gateway`. The gateway joins the external `butler_default` network (Butler API at
+  `http://backend:8765`) and bind-mounts `/var/lib/butler`; the librarian prompt uses that URL and the container token path.
+  The `/usr/local/lib/personal-agent-infra/butler-review-queue.sh` symlink was repointed from `/srv/agent-infra` to this
+  checkout. Paseo<->Hermes/omp integration is intentionally NOT migrated (host-only `hermes`, `paseo-omp` wrappers remain).
+  Not covered: SCHEMA.md's `/home/hermes/workspace/research/` and `~/backups/second-brain/` host paths do not exist in the container.

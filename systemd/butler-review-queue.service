@@ -5,8 +5,8 @@ After=docker.service network-online.target
 
 [Service]
 Type=oneshot
-User=hermes
-Group=hermes
+User=ubuntu
+Group=ubuntu
 ExecStart=/usr/local/lib/personal-agent-infra/butler-review-queue.sh
 TimeoutStartSec=45min
 NoNewPrivileges=yes

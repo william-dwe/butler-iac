@@ -5,8 +5,8 @@ You are the librarian. The timer started this run because Butler reports review 
 ## Access
 
 ```sh
-TOKEN_FILE=/home/hermes/.hermes/profiles/librarian/secrets/butler-librarian.token
-BASE=http://127.0.0.1:8765/api/librarian/review-packets
+TOKEN_FILE=/opt/data/profiles/librarian/secrets/butler-librarian.token
+BASE=http://backend:8765/api/librarian/review-packets
 api() { curl -fsS --max-time 20 -H @- -H 'Content-Type: application/json' "$@" <<<"Authorization: Bearer $(<"$TOKEN_FILE")"; }
 uuid() { python3 -c 'import uuid; print(uuid.uuid4())'; }
 api "$BASE?state=queued&limit=20"
