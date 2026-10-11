@@ -33,9 +33,6 @@ services:
       - /home/agentops/data/butler:/var/lib/butler
       # /var/lib/butler/wiki is a symlink to WIKI_DIR; mount the target at the same path so it resolves.
       - ${WIKI_DIR:?WIKI_DIR is required}:${WIKI_DIR:?WIKI_DIR is required}
-      # Legacy in-container paths still referenced by agent cron jobs, skills and memory (container-only). Drop after data rewrite (docs/open-items.md phase 2).
-      - ${WIKI_DIR:?WIKI_DIR is required}:/home/hermes/services/second-brain-wiki
-      - /home/agentops/workspace/research:/home/hermes/workspace/research
       # Researcher output path referenced by wiki SCHEMA.md (raw/briefings/).
       - /home/agentops/workspace/research:/home/agentops/workspace/research
       # Dedicated workspace: persistent clones of working repos (e.g. butler-backend).
@@ -49,9 +46,7 @@ services:
       - /home/agentops/data/butler:/var/lib/butler
       - /home/agentops/.hermes:/opt/data
       - ${WIKI_DIR:?WIKI_DIR is required}:${WIKI_DIR:?WIKI_DIR is required}
-      - ${WIKI_DIR:?WIKI_DIR is required}:/home/hermes/services/second-brain-wiki
       - /home/agentops/workspace/research:/home/agentops/workspace/research
-      - /home/agentops/workspace/research:/home/hermes/workspace/research
       - /home/agentops/workspace/repos:/home/agentops/workspace/repos
     ports:
       # Tailscale IP only; Docker-published ports bypass UFW.

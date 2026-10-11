@@ -4,9 +4,9 @@
 Status: done 2026-10-11, including dropping the `/home/hermes` symlink. All host data lives under `/home/agentops`; the account, group and
 home are `agentops` (uid/gid 1003 unchanged). `butler_dir`/`wiki_dir` follow `agent_user`.
 
-Container-side paths still say `/home/hermes/...` on purpose (bind TARGETS in `manifests/hermes` and `manifests/paseo`, plus a gateway-only alias
-`/home/hermes/services/second-brain-wiki`), because ~260 files of agent data (cron `jobs.json`, skills, memory JSON, wiki `SCHEMA.md`) reference them.
-Optional phase 2: rewrite those references, then drop the aliases. Never edit the upstream Hermes checkout (`~/.hermes/hermes-agent`).
+Phase 2 done 2026-10-12: agent data rewritten with `scripts/rewrite-hermes-paths.sh` and the `/home/hermes/...` bind-mount aliases dropped from
+`manifests/hermes` and `manifests/paseo`. Remaining mentions are history only (sessions, logs, caches, wiki `raw/` and `log.md`, and one comment in wiki
+`SCHEMA.md:17`; fix that via the librarian after approval). Never edit the upstream Hermes checkout (`~/.hermes/hermes-agent`).
 
 Original break analysis (kept for phase 2):
 Would break if renamed without fixing (host uid/gid 1003, home `/home/hermes`):
