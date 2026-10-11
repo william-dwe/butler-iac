@@ -130,7 +130,7 @@ dotenvx decrypt -f .env -fk /etc/dotenvx/personal-agent-infra.env.keys --stdout
 - 9router is published only on `TAILSCALE_IP`; Docker-published ports bypass UFW, so never bind `0.0.0.0`.
 - Headroom must not publish host port or Tailscale Serve rule; 9router calls `/v1/compress` without token.
 - `scripts/hermes-sudo.sh` grant and `docker` group membership are root-equivalent.
-- Butler runs only through configured `BUTLER_DIR/compose.yml`; host ports remain loopback. Backend joins `personal-agent-infra_app-network` only for 9router; frontend stays private.
+- Butler runs only through configured `BUTLER_DIR/compose.yml`; host ports remain loopback. Backend joins `butler-iac_app-network` only for 9router; frontend stays private.
 - `/var/lib/butler` is shared through named ACLs by `hermes` and `ubuntu`. Butler container runs as root only for portable bind-mount ownership; do not add `hermes` to Docker group.
 
 ## GitOps manifests
