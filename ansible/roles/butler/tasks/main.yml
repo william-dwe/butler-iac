@@ -227,6 +227,8 @@
       env_file={{ butler_runtime_env | quote }}
       user=$(sed -n 's/^GHCR_USERNAME=//p' "$env_file")
       token=$(sed -n 's/^GHCR_PULL_TOKEN=//p' "$env_file")
+      # dotenvx set stores values double-quoted; strip one surrounding pair.
+      user=${user#\"}; user=${user%\"}; token=${token#\"}; token=${token%\"}
       if [ -z "$user" ] || [ -z "$token" ]; then echo SKIPPED; exit 0; fi
       printf '%s' "$token" | runuser -u {{ admin_user | quote }} -- \
         env DOCKER_CONFIG=/home/{{ admin_user }}/.docker docker login ghcr.io -u "$user" --password-stdin >/dev/null
