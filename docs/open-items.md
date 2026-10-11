@@ -1,16 +1,13 @@
 # Open items
 
 ## Rename host user `hermes` to `agentops` (vendor-neutral)
-Status: phase 1 (account rename) done 2026-10-11 on the host; phase 2 not started. Host account, group and real home are now `agentops`
-(uid/gid 1003 unchanged); `/home/hermes` is a compatibility symlink to `/home/agentops`.
+Status: done 2026-10-11, including dropping the `/home/hermes` symlink. All host data lives under `/home/agentops`; the account, group and
+home are `agentops` (uid/gid 1003 unchanged). `butler_dir`/`wiki_dir` follow `agent_user`.
 
-Phase 1 changed: `agent_user`/`dashboard_user` in Ansible, compose host-side bind SOURCES (`/home/agentops/...`), `hermes-sudo.sh`
-(grants sudo to `agentops`; file name `90-hermes-agent` kept to match the `hermes-sudo-expire` unit).
-Deliberately unchanged: container-side paths and `butler_dir`/`wiki_dir` (pinned to `/home/hermes/services/...`), because about 260 files of
-agent data (profiles, skills, scripts, memory JSON) and the wiki `SCHEMA.md` still reference `/home/hermes/...`, and containers have no such compat symlink.
-
-Phase 2 (optional, risky): rewrite those absolute paths, repoint `butler_dir`/`wiki_dir`, then drop the `/home/hermes` symlink. Never edit the upstream
-Hermes checkout (`~/.hermes/hermes-agent`); fix our compose/config instead.
+Container-side paths still say `/home/hermes/...` on purpose (bind TARGETS in `manifests/hermes` and `manifests/paseo`, plus a gateway-only alias
+`/home/hermes/services/second-brain-wiki`), because ~260 files of agent data (cron `jobs.json`, skills, memory JSON, wiki `SCHEMA.md`) reference them.
+Optional phase 2: rewrite those references, then drop the aliases. Never edit the upstream Hermes checkout (`~/.hermes/hermes-agent`).
+Leftover: dormant `~agentops/.config/systemd/user/hermes-gateway.service` still names `/home/hermes`; it is not enabled, delete it when convenient.
 
 Original break analysis (kept for phase 2):
 Would break if renamed without fixing (host uid/gid 1003, home `/home/hermes`):
