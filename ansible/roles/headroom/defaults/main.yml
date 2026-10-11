@@ -1,3 +1,3 @@
 admin_user: ubuntu
-infra_dir: "/home/{{ admin_user }}/services/personal-agent-infra"
+infra_dir: "/home/{{ admin_user }}/services/butler-iac"
 runtime_env: /etc/personal-agent-infra.env

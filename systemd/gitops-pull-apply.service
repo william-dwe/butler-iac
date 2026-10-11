@@ -7,6 +7,6 @@ After=docker.service network-online.target
 Type=oneshot
 User=ubuntu
 Group=ubuntu
-ExecStart=/home/ubuntu/services/personal-agent-infra/scripts/gitops-pull-apply.sh
+ExecStart=/home/ubuntu/services/butler-iac/scripts/gitops-pull-apply.sh
 TimeoutStartSec=30min
 NoNewPrivileges=yes

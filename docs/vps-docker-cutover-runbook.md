@@ -6,7 +6,7 @@ deliberately human-reviewed and NOT something OMP or Orchestrator runs unattende
 
 ## Pre-conditions (all true as of 2026-10-10)
 - All role/playbook work for this migration committed on `main` in
-  `/home/ubuntu/services/personal-agent-infra` (commits through `1018689`), NOT pushed.
+  `/home/ubuntu/services/butler-iac` (commits through `1018689`), NOT pushed.
 - `hermes` and `paseo` roles are tagged `[hermes, never]` / `[paseo, never]` in
   `services.yml` — a normal `ansible-playbook services.yml` run skips them; only an
   explicit `--tags hermes,paseo` run touches them.
@@ -113,17 +113,17 @@ documented rollback (stops services, extracts archive, restarts services).
 - The first `--tags hermes,paseo` run failed on `--wait` (gateway unhealthy) and never reached paseo; re-run `--tags paseo`.
 - Container start migrates `config.yaml` schema 49 -> 50 (backups in `/home/hermes/.hermes/backups/config/`).
   Return to bare metal is not planned (owner decision 2026-10-11), so rollback to the old binary is untested and unsupported.
-- `backup.yml` stops all services/containers (~2.5 min). 9router's real bind mount is `/srv/agent-infra/data/9router`
-  (compose project dir `/srv/agent-infra`, not `infra_dir`). `router_data_dirs` in `inventory.yml` now lists both roots;
-  `backup.yml` archives whichever exist and `restore.yml` only wipes a `9router` dir the archive replaces.
+- `backup.yml` stops all services/containers (~2.5 min). 9router data lives in `infra_dir/data/9router` (moved from
+  `/srv/agent-infra/data` on 2026-10-11 when the legacy copies were retired). `router_data_dirs` in `inventory.yml` lists that root;
+  `backup.yml` archives it if present and `restore.yml` only wipes a `9router` dir the archive replaces.
   The 2026-10-10 archive predates this fix; its 9router data is in `backups/pai-9router-srv-20261011.tar.zst`.
 - Verified: HERMES_UID/GID honored (entrypoint logs "Changing hermes UID to 1003"); paseo healthcheck passes.
 - Butler review queue now runs through the container. `butler-review-queue.service` runs as `ubuntu` (docker group; `hermes`
   has no docker access) and `scripts/butler-review-queue.sh` does the pending-count gate and `hermes -p librarian chat`
   via `docker exec -u hermes hermes-gateway`. The gateway joins the external `butler_default` network (Butler API at
   `http://backend:8765`) and bind-mounts `/var/lib/butler`; the librarian prompt uses that URL and the container token path.
-  The `/usr/local/lib/personal-agent-infra/butler-review-queue.sh` symlink was repointed from `/srv/agent-infra` to this
-  checkout. Paseo<->Hermes/omp integration was first left out and later added; see the Paseo providers note below.
+  The `/usr/local/lib/personal-agent-infra/butler-review-queue.sh` symlink points at this checkout's `scripts/` (now `/home/ubuntu/services/butler-iac`).
+  Paseo<->Hermes/omp integration was first left out and later added; see the Paseo providers note below.
   Not covered: SCHEMA.md's `/home/hermes/workspace/research/` and `~/backups/second-brain/` host paths do not exist in the container.
 - Research mount: `hermes-gateway` bind-mounts `/home/hermes/workspace/research` (SCHEMA.md `raw/briefings/` source path).
 - Paseo providers now run inside the container. `omp` state moved to hermes ownership: `/home/hermes/.omp` and

@@ -10,7 +10,7 @@ again.
 ## What you're doing
 Switch 3 live bare-metal services to Docker containers, following the
 already-written runbook at `docs/vps-docker-cutover-runbook.md` in this repo
-(`/home/ubuntu/services/personal-agent-infra`, branch `main`, already pushed to
+(`/home/ubuntu/services/butler-iac`, branch `main`, already pushed to
 `github.com/william-dwe/personal-agent-infra`). Read that file first — it's the
 primary instruction set. This handoff adds context/preconditions it doesn't
 cover and should be read alongside it, not instead of it.
