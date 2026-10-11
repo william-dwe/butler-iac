@@ -15,12 +15,9 @@ services:
       - HEADROOM_WORKSPACE_DIR=/home/nonroot/.headroom
       - HEADROOM_CONFIG_DIR=/home/nonroot/.headroom/config
     volumes:
-      - headroom_workspace:/home/nonroot/.headroom
+      - /home/agentops/data/headroom:/home/nonroot/.headroom
     networks:
       - app-network
 
 networks:
   app-network: {}
-
-volumes:
-  headroom_workspace:

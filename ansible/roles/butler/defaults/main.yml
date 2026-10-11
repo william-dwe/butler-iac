@@ -1,6 +1,6 @@
 admin_user: ubuntu
 agent_user: agentops
-butler_data_dir: /var/lib/butler
+butler_data_dir: "/home/{{ agent_user }}/data/butler"
 control_dir: "/home/{{ admin_user }}/.config/butler-iac"
 butler_runtime_env: "{{ control_dir }}/runtime.env"
 butler_review_helper_dir: /usr/local/lib/personal-agent-infra

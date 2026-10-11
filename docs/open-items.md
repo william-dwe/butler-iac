@@ -39,3 +39,6 @@ Decide first: whether `HERMES_HOME`/`~/.hermes` (the product's own data dir) sta
 - `/home/hermes/.omp` and `/home/hermes/.pi` are a point-in-time copy of the `ubuntu` state and drift.
 - Monitoring (node-exporter, cAdvisor, Prometheus, Grafana) is deployed by the root compose (`manifests/*`) and scraped over the shared `butler_default` network by service name.
 - The Paseo Hermes provider logs `CLI exposure failed: Permission denied: /home/paseo/.local/bin` and retries an interrupted source update on every start (`installs/*/source-completion-pending`). It still answers ACP `initialize`.
+
+## Data layout
+All service state lives under `/home/agentops/data/{butler,9router,grafana,prometheus,headroom}` (bind mounts; container-side paths unchanged). The control plane (infra repo, `~/.config/butler-iac`, GitOps timer) stays under `ubuntu`. Old Docker volumes `grafana_grafana_data`, `prometheus_prometheus_data`, `butler-iac_headroom_workspace` are kept for rollback until deleted.

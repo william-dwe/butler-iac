@@ -130,7 +130,7 @@ dotenvx decrypt -f .env -fk ~/.config/butler-iac/dotenvx.keys --stdout
 - Headroom must not publish host port or Tailscale Serve rule; 9router calls `/v1/compress` without token. Verify with `docker port headroom` (must be empty) and `tailscale serve status`.
 - `scripts/hermes-sudo.sh` grant and `docker` group membership are root-equivalent.
 - Butler host ports remain loopback. Backend joins `app-network` for 9router; frontend stays private.
-- `/var/lib/butler` is shared through named ACLs by `hermes` and `ubuntu`. Butler container runs as root only for portable bind-mount ownership; do not add `hermes` to Docker group.
+- `/home/agentops/data/butler` (mounted as `/var/lib/butler` in containers) is shared through named ACLs by `agentops` and `ubuntu`. Butler container runs as root only for portable bind-mount ownership; do not add `hermes` to Docker group.
 
 ## GitOps manifests
 

@@ -9,7 +9,9 @@ prompt=$root/scripts/butler-review-queue.prompt.md
 token_file=/opt/data/profiles/librarian/secrets/butler-librarian.token # container path
 base=http://backend:8765/api/librarian/review-packets
 
-exec 9>/var/lib/butler/review-queue.lock
+# Lock lives with the control plane (ubuntu), not in the agents' data dir.
+mkdir -p "$HOME/.cache"
+exec 9>"$HOME/.cache/butler-review-queue.lock"
 flock -n 9 || { echo "previous run still active"; exit 0; }
 
 pending=$(docker exec -i -u hermes hermes-gateway bash -c 'curl -fsS --max-time 10 -H @- "$0/pending-count" <<<"Authorization: Bearer $(<"$1")"' "$base" "$token_file" |

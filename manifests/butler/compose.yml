@@ -23,7 +23,7 @@ services:
     ports:
       - 127.0.0.1:8765:8765
     volumes:
-      - /var/lib/butler:/data
+      - /home/agentops/data/butler:/data
       - type: bind
         source: ${WIKI_DIR:?WIKI_DIR is required}
         target: ${WIKI_DIR:?WIKI_DIR is required}

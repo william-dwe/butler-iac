@@ -14,8 +14,7 @@ services:
       - JWT_SECRET=${NINEROUTER_JWT_SECRET}
       - HEADROOM_URL=http://headroom:8787
     volumes:
-      # Relative to this file: keeps state at <repo>/data/9router (gitignored).
-      - ../../data/9router:/app/data
+      - /home/agentops/data/9router:/app/data
     networks:
       - app-network
 

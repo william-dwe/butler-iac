@@ -30,7 +30,7 @@ services:
     volumes:
       - /home/agentops/.hermes:/opt/data
       # Butler wiki + task DB for scripts/butler-review-queue.sh (librarian runs inside this container).
-      - /var/lib/butler:/var/lib/butler
+      - /home/agentops/data/butler:/var/lib/butler
       # /var/lib/butler/wiki is a symlink to WIKI_DIR; mount the target at the same path so it resolves.
       - ${WIKI_DIR:?WIKI_DIR is required}:${WIKI_DIR:?WIKI_DIR is required}
       # Legacy in-container path still referenced by agent cron jobs, skills and memory (container-only; no host symlink).

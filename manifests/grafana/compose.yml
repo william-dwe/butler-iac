@@ -7,8 +7,5 @@ services:
     ports:
       - "127.0.0.1:3000:3000"
     volumes:
-      - grafana_data:/var/lib/grafana
+      - /home/agentops/data/grafana:/var/lib/grafana
       - ./provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-volumes:
-  grafana_data:
-    name: grafana_grafana_data # pre-include live volume
