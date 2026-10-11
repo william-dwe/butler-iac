@@ -68,6 +68,26 @@
   when: vault_backup_password is not defined
   tags: [backup]
 
+# Off-box copy to Cloudflare R2 (S3 API). Values live in Ansible Vault; without all four the backup stays local-only.
+- name: Render off-box backup settings (Cloudflare R2)
+  ansible.builtin.copy:
+    content: |
+      REMOTE_RESTIC_REPOSITORY=s3:https://{{ vault_r2_account_id }}.r2.cloudflarestorage.com/{{ vault_r2_bucket }}/agent-state
+      AWS_ACCESS_KEY_ID={{ vault_r2_access_key_id }}
+      AWS_SECRET_ACCESS_KEY={{ vault_r2_secret_access_key }}
+      AWS_DEFAULT_REGION=auto
+    dest: "{{ control_dir }}/backup.env"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  when:
+    - vault_r2_account_id is defined
+    - vault_r2_bucket is defined
+    - vault_r2_access_key_id is defined
+    - vault_r2_secret_access_key is defined
+  tags: [backup]
+
 - name: Link backup units
   ansible.builtin.file:
     src: "{{ infra_dir }}/systemd/{{ item }}"

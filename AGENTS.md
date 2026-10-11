@@ -68,11 +68,11 @@ Butler role writes `BUTLER_DIR` and `WIKI_DIR` (absolute, from inventory) into `
 
 ## Security-sensitive knobs
 
-- `scripts/hermes-sudo.sh on` writes `/etc/sudoers.d/90-hermes-agent`, which gives `hermes` passwordless root. `off` removes only that file.
-- Membership in the `docker` group is also root-equivalent, so `hermes` in `docker` means `hermes` is effectively root.
-- Mention either one whenever a change touches `hermes` permissions.
+- `scripts/hermes-sudo.sh on` writes `/etc/sudoers.d/90-hermes-agent`, which gives `agentops` passwordless root. `off` removes only that file.
+- Membership in the `docker` group is also root-equivalent, so `agentops` in `docker` means `agentops` is effectively root.
+- Mention either one whenever a change touches `agentops` permissions.
 - `/home/agentops/data/butler` (role `butler`, `tasks/main.yml`; container path `/var/lib/butler`) is read-write for `agentops`, `ubuntu`, and root via ACLs. It holds administrator task DB and attachments.
-- Butler runs from Compose with a root backend only because host `hermes` UID is not portable into images. Backend has a read-write `/home/agentops/data/butler` mount and read-only wiki mount; host CLI remains `hermes`. Do not add `hermes` to Docker group.
+- Butler runs from Compose with a root backend only because the host `agentops` UID is not portable into images. Backend has a read-write `/home/agentops/data/butler` mount and read-only wiki mount; host CLI runs as `agentops`. Do not add `agentops` to Docker group.
 
 ## Working here
 

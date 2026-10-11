@@ -2,8 +2,9 @@
 # Encrypted restic backup of agent state (everything under /home/agentops that is not regenerable).
 # Runs as root from backup.timer. Control-plane secrets are NOT backed up: they re-render from .env + the
 # dotenvx key in Ansible Vault. Live SQLite DBs are snapshotted with the online-backup API first.
-# Default repo is LOCAL (same disk): protects against mistakes, not disk loss. For off-box, create
-# ~/.config/butler-iac/backup.env (root 0600) with RESTIC_REPOSITORY + that backend's credentials.
+# Primary repo is LOCAL (fast restores, same disk). If REMOTE_RESTIC_REPOSITORY is set (e.g. Cloudflare R2 via
+# ~/.config/butler-iac/backup.env, rendered by the backup role from Ansible Vault), new snapshots are also
+# `restic copy`'d there with the same retention: that is the disaster-recovery copy.
 set -euo pipefail
 
 cfg=${BUTLER_IAC_CONFIG:-/home/ubuntu/.config/butler-iac}
@@ -63,10 +64,17 @@ restic backup --tag "$tag" --host vps --one-file-system --exclude-file "$stage/.
   "$home/.hermes" "$home/.paseo" "$home/.omp" "$home/.pi" "$home/workspace" "$home/data" "$home/services" "$stage"
 
 # Retention; prune and a light integrity check once a week.
-if [ "$(date +%u)" = 7 ]; then
-  restic forget --tag "$tag" --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune
-  restic check --read-data-subset=2%
-else
-  restic forget --tag "$tag" --keep-daily 7 --keep-weekly 4 --keep-monthly 6
-fi
+forget=(forget --tag "$tag" --keep-daily 7 --keep-weekly 4 --keep-monthly 6)
+sunday=0; [ "$(date +%u)" = 7 ] && sunday=1
+if [ "$sunday" = 1 ]; then restic "${forget[@]}" --prune; restic check --read-data-subset=2%; else restic "${forget[@]}"; fi
 restic snapshots --tag "$tag" --latest 1 --compact
+
+# Off-box copy (same password file for both repos; chunker params copied so dedup works across them).
+if [ -n "${REMOTE_RESTIC_REPOSITORY:-}" ]; then
+  export RESTIC_FROM_REPOSITORY=$RESTIC_REPOSITORY RESTIC_FROM_PASSWORD_FILE=$RESTIC_PASSWORD_FILE
+  export RESTIC_REPOSITORY=$REMOTE_RESTIC_REPOSITORY
+  restic cat config >/dev/null 2>&1 || { echo "initialising remote repository"; restic init --copy-chunker-params; }
+  restic copy --tag "$tag"
+  if [ "$sunday" = 1 ]; then restic "${forget[@]}" --prune; restic check --read-data-subset=1%; else restic "${forget[@]}"; fi
+  restic snapshots --tag "$tag" --latest 1 --compact
+fi

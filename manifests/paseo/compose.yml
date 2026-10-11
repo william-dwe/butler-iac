@@ -16,12 +16,14 @@ services:
       - /home/agentops/.paseo/local-bin:/home/paseo/.local/bin
       # OMP CLI for paseo-omp provider; Ansible-managed stable install path.
       - /opt/omp:/opt/omp:ro
+      - /home/agentops/.hermes:/home/agentops/.hermes
+      # Legacy path still baked into ~/.paseo/config.json; drop after rewriting it.
       - /home/agentops/.hermes:/home/hermes/.hermes
       # OMP state + 9router provider config; owned by hermes (uid 1003), same as the container user.
       - /home/agentops/.omp:/home/paseo/.omp
       - /home/agentops/.pi:/home/paseo/.pi
     environment:
-      - HERMES_HOME=/home/hermes/.hermes
+      - HERMES_HOME=/home/agentops/.hermes
     healthcheck:
       # No documented HTTP endpoint: TCP connect only. Needs bash in image (unverified).
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/${TAILSCALE_IP:?set TAILSCALE_IP}/6767"]

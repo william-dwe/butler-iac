@@ -33,12 +33,13 @@ services:
       - /home/agentops/data/butler:/var/lib/butler
       # /var/lib/butler/wiki is a symlink to WIKI_DIR; mount the target at the same path so it resolves.
       - ${WIKI_DIR:?WIKI_DIR is required}:${WIKI_DIR:?WIKI_DIR is required}
-      # Legacy in-container path still referenced by agent cron jobs, skills and memory (container-only; no host symlink).
+      # Legacy in-container paths still referenced by agent cron jobs, skills and memory (container-only). Drop after data rewrite (docs/open-items.md phase 2).
       - ${WIKI_DIR:?WIKI_DIR is required}:/home/hermes/services/second-brain-wiki
-      # Researcher output path referenced by wiki SCHEMA.md (raw/briefings/).
       - /home/agentops/workspace/research:/home/hermes/workspace/research
+      # Researcher output path referenced by wiki SCHEMA.md (raw/briefings/).
+      - /home/agentops/workspace/research:/home/agentops/workspace/research
       # Dedicated workspace: persistent clones of working repos (e.g. butler-backend).
-      - /home/agentops/workspace/repos:/home/hermes/workspace/repos
+      - /home/agentops/workspace/repos:/home/agentops/workspace/repos
   dashboard:
     <<: *hermes
     container_name: hermes-dashboard
