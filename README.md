@@ -156,3 +156,6 @@ Services applied by the timer: butler, hermes, paseo, 9router, headroom, node-ex
 prometheus, grafana. Secrets come from `/etc/butler-iac/stack.env` (`root:ubuntu 0640`), rendered by
 the `butler` role; the timer fails if it is missing. All services share the project default network
 `butler_default`. One failing service fails `config` for the whole stack.
+
+### Architecture diagram
+`docs/architecture.{svg,html}` are maintained by Hermes and may lag behind this README. Current layout: one root `docker-compose.yml` including every `manifests/<service>/compose.yml`, all services on the shared `butler_default` network (Headroom still has no host port), secrets from `/etc/butler-iac/stack.env`.

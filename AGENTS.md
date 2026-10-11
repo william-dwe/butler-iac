@@ -50,6 +50,13 @@ VPS migration (backup old VPS -> `init.yml` on new VPS -> `services.yml` -> rest
 
 Butler role writes root-owned `/etc/personal-agent-infra.paths` mode `0644`: exactly absolute `BUTLER_DIR` and `WIKI_DIR` from inventory. Changing live locations requires an approved Butler stop, inventory update, and deploy.
 
+## Architecture diagram
+
+`docs/architecture.{svg,html}` are maintained by Hermes, not by `ubuntu` agents. They predate the single-root-compose change; Hermes should update them to show:
+- one root `docker-compose.yml` (project `butler-iac`) that `include:`s every `manifests/<svc>/compose.yml` (butler, hermes, paseo, 9router, headroom, node-exporter, cadvisor, prometheus, grafana);
+- a shared project default network `butler_default` for all services (accepted isolation regression), plus `app-network` for backend/9router/headroom;
+- secrets from `/etc/butler-iac/stack.env`, applied by the `gitops-pull-apply` timer, with no per-service Ansible roles for 9router or headroom.
+
 ## Env secrets
 
 - dotenvx-encrypted `.env` (committed to this repo) is source of runtime secrets. `/etc/dotenvx/personal-agent-infra.env.keys` is root-owned mode `0600`; only Ansible Vault ciphertext `ansible/group_vars/all/vault.yml` stores it outside VPS. Agents never read either key material. `/etc/personal-agent-infra.env` is root-owned rendered runtime config.
