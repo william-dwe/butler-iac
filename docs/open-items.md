@@ -7,7 +7,6 @@ home are `agentops` (uid/gid 1003 unchanged). `butler_dir`/`wiki_dir` follow `ag
 Container-side paths still say `/home/hermes/...` on purpose (bind TARGETS in `manifests/hermes` and `manifests/paseo`, plus a gateway-only alias
 `/home/hermes/services/second-brain-wiki`), because ~260 files of agent data (cron `jobs.json`, skills, memory JSON, wiki `SCHEMA.md`) reference them.
 Optional phase 2: rewrite those references, then drop the aliases. Never edit the upstream Hermes checkout (`~/.hermes/hermes-agent`).
-Leftover: dormant `~agentops/.config/systemd/user/hermes-gateway.service` still names `/home/hermes`; it is not enabled, delete it when convenient.
 
 Original break analysis (kept for phase 2):
 Would break if renamed without fixing (host uid/gid 1003, home `/home/hermes`):
@@ -41,4 +40,4 @@ Decide first: whether `HERMES_HOME`/`~/.hermes` (the product's own data dir) sta
 - The Paseo Hermes provider logs `CLI exposure failed: Permission denied: /home/paseo/.local/bin` and retries an interrupted source update on every start (`installs/*/source-completion-pending`). It still answers ACP `initialize`.
 
 ## Data layout
-All service state lives under `/home/agentops/data/{butler,9router,grafana,prometheus,headroom}` (bind mounts; container-side paths unchanged). The control plane (infra repo, `~/.config/butler-iac`, GitOps timer) stays under `ubuntu`. Old Docker volumes `grafana_grafana_data`, `prometheus_prometheus_data`, `butler-iac_headroom_workspace` are kept for rollback until deleted.
+All service state lives under `/home/agentops/data/{butler,9router,grafana,prometheus,headroom}` (bind mounts; container-side paths unchanged). The control plane (infra repo, `~/.config/butler-iac`, GitOps timer) stays under `ubuntu`.

@@ -1,8 +1,10 @@
 # Daily encrypted restic backup of agent state (scripts/backup.sh). Default repository is local; for off-box put
 # RESTIC_REPOSITORY + credentials in {{ control_dir }}/backup.env (root 0600). See README "Backups".
-- name: Install restic
+- name: Install restic and rclone
   ansible.builtin.apt:
-    name: restic
+    name:
+      - restic
+      - rclone
     state: present
     update_cache: true
     cache_valid_time: 3600
@@ -68,24 +70,41 @@
   when: vault_backup_password is not defined
   tags: [backup]
 
-# Off-box copy to Cloudflare R2 (S3 API). Values live in Ansible Vault; without all four the backup stays local-only.
-- name: Render off-box backup settings (Cloudflare R2)
+# Off-box copy to Google Drive through rclone. Values live in Ansible Vault; without all three the backup stays
+# local-only. Scope drive.file: the token can only see files this backup created, not the rest of the Drive.
+- name: Render rclone config for Google Drive
   ansible.builtin.copy:
     content: |
-      REMOTE_RESTIC_REPOSITORY=s3:https://{{ vault_r2_account_id }}.r2.cloudflarestorage.com/{{ vault_r2_bucket }}/agent-state
-      AWS_ACCESS_KEY_ID={{ vault_r2_access_key_id }}
-      AWS_SECRET_ACCESS_KEY={{ vault_r2_secret_access_key }}
-      AWS_DEFAULT_REGION=auto
-    dest: "{{ control_dir }}/backup.env"
+      [gdrive]
+      type = drive
+      client_id = {{ vault_gdrive_client_id }}
+      client_secret = {{ vault_gdrive_client_secret }}
+      scope = drive.file
+      token = {{ vault_gdrive_token }}
+    dest: "{{ control_dir }}/rclone.conf"
     owner: root
     group: root
     mode: "0600"
   no_log: true
   when:
-    - vault_r2_account_id is defined
-    - vault_r2_bucket is defined
-    - vault_r2_access_key_id is defined
-    - vault_r2_secret_access_key is defined
+    - vault_gdrive_client_id is defined
+    - vault_gdrive_client_secret is defined
+    - vault_gdrive_token is defined
+  register: backup_rclone_conf
+  tags: [backup]
+
+# rclone rewrites the token in rclone.conf when it refreshes it; that is expected.
+- name: Render off-box backup settings (Google Drive)
+  ansible.builtin.copy:
+    content: |
+      REMOTE_RESTIC_REPOSITORY=rclone:gdrive:agent-state
+      RCLONE_CONFIG={{ control_dir }}/rclone.conf
+      RCLONE_DRIVE_USE_TRASH=false
+    dest: "{{ control_dir }}/backup.env"
+    owner: root
+    group: root
+    mode: "0600"
+  when: backup_rclone_conf is not skipped
   tags: [backup]
 
 - name: Link backup units

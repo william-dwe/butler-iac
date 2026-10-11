@@ -44,6 +44,14 @@ services:
     <<: *hermes
     container_name: hermes-dashboard
     command: ["dashboard", "--host", "0.0.0.0", "--port", "9119", "--insecure", "--tui", "--no-open"]
+    # Dashboard --tui runs agent sessions here: needs the same workspace mounts as the gateway (a service-level volumes key replaces the anchor's).
+    volumes:
+      - /home/agentops/.hermes:/opt/data
+      - ${WIKI_DIR:?WIKI_DIR is required}:${WIKI_DIR:?WIKI_DIR is required}
+      - ${WIKI_DIR:?WIKI_DIR is required}:/home/hermes/services/second-brain-wiki
+      - /home/agentops/workspace/research:/home/agentops/workspace/research
+      - /home/agentops/workspace/research:/home/hermes/workspace/research
+      - /home/agentops/workspace/repos:/home/agentops/workspace/repos
     ports:
       # Tailscale IP only; Docker-published ports bypass UFW.
       - "${TAILSCALE_IP:?set TAILSCALE_IP}:9119:9119"
