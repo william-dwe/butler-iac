@@ -1,6 +1,6 @@
 # Whole stack. Each service lives in manifests/<svc>/compose.yml; this file only includes them.
 # `name:` in included files is ignored: every container belongs to project butler-iac.
-# Needs --env-file /etc/butler-iac/stack.env (rendered by the butler Ansible role).
+# Needs --env-file ~/.config/butler-iac/stack.env (rendered by the butler Ansible role).
 name: butler-iac
 
 include:

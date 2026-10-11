@@ -3,7 +3,7 @@
   become: true
   roles:
     # Whole stack (9router, headroom, hermes, paseo, butler, monitoring): root docker-compose.yml,
-    # applied by gitops-pull-apply (needs /etc/butler-iac/stack.env from the butler role).
+    # applied by gitops-pull-apply (needs ~ubuntu/.config/butler-iac/stack.env from the butler role).
     - role: butler
       tags: [butler-deploy]
       when: "'butler-deploy' in ansible_run_tags"

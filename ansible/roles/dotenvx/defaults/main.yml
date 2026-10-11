@@ -1,3 +1,4 @@
 admin_user: ubuntu
 infra_dir: "/home/{{ admin_user }}/services/butler-iac"
-dotenvx_key_path: /etc/dotenvx/personal-agent-infra.env.keys
+control_dir: "/home/{{ admin_user }}/.config/butler-iac"
+dotenvx_key_path: "{{ control_dir }}/dotenvx.keys"

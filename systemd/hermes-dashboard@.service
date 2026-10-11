@@ -12,7 +12,7 @@ WorkingDirectory=/home/%i
 Environment=HOME=/home/%i LANG=en_US.UTF-8 TERM=xterm-256color
 Environment=PATH=/home/%i/.local/bin:/usr/local/bin:/usr/bin:/bin
 # Secrets live off-git; "-" = don't fail if the file is missing. Read by systemd as root, so 600 is fine.
-EnvironmentFile=-/etc/personal-agent-infra.env
+EnvironmentFile=-/home/ubuntu/.config/butler-iac/runtime.env
 # ponytail: --insecure + 0.0.0.0 relies on UFW (only tailscale0 + 22 allowed). Bind to the tailscale IP if UFW ever changes.
 ExecStart=/home/%i/.local/bin/hermes dashboard --host 0.0.0.0 --port 9119 --insecure --tui --no-open
 Restart=on-failure

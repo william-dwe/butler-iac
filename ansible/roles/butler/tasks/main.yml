@@ -81,15 +81,6 @@
   become_user: "{{ agent_user }}"
   tags: [butler-deploy]
 
-- name: Write Butler checkout paths
-  ansible.builtin.copy:
-    content: "BUTLER_DIR={{ butler_dir }}\nWIKI_DIR={{ wiki_dir }}\n"
-    dest: "{{ butler_paths_file }}"
-    owner: root
-    group: root
-    mode: "0644"
-  tags: [butler-deploy]
-
 - name: Check Butler wiki link
   ansible.builtin.stat:
     path: "{{ butler_data_dir }}/wiki"
@@ -191,28 +182,28 @@
   when: butler_legacy_units.changed
   tags: [butler-deploy]
 
-- name: Create GitOps env directory
+- name: Create control-plane configuration directory
   ansible.builtin.file:
-    path: /etc/butler-iac
+    path: "{{ control_dir }}"
     state: directory
-    owner: root
+    owner: "{{ admin_user }}"
     group: "{{ admin_user }}"
-    mode: "0750"
+    mode: "0700"
   tags: [butler-deploy]
 
-# gitops-pull-apply runs as admin_user and cannot read the root-only runtime env.
+# gitops-pull-apply runs as admin_user and must not need the root-only runtime env.
 # Hand it only the keys the root docker-compose.yml (manifests/*) interpolates.
 - name: Render GitOps stack env
   ansible.builtin.shell:
     cmd: |
       set -euo pipefail
-      tmp=$(mktemp /etc/butler-iac/.stack.env.XXXXXX)
+      tmp=$(mktemp {{ control_dir | quote }}/.stack.env.XXXXXX)
       trap 'rm -f "$tmp"' EXIT
       { grep -E '^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY|TAILSCALE_IP|NINEROUTER_[A-Z0-9_]+)=' {{ butler_runtime_env | quote }} || true
-        printf 'WIKI_DIR=%s\n' {{ wiki_dir | quote }}; } > "$tmp"
-      chown root:{{ admin_user }} "$tmp"
-      chmod 0640 "$tmp"
-      mv -f "$tmp" /etc/butler-iac/stack.env
+        printf 'WIKI_DIR=%s\nBUTLER_DIR=%s\n' {{ wiki_dir | quote }} {{ butler_dir | quote }}; } > "$tmp"
+      chown {{ admin_user }}:{{ admin_user }} "$tmp"
+      chmod 0600 "$tmp"
+      mv -f "$tmp" {{ (control_dir ~ '/stack.env') | quote }}
       trap - EXIT
     executable: /bin/bash
   changed_when: false
@@ -267,4 +258,16 @@
   environment:
     DOCKER_CONFIG: "/home/{{ admin_user }}/.docker"  # GHCR login lives with admin_user
   changed_when: false
+  tags: [butler-deploy]
+
+# Control-plane files used to live in /etc; they now live in control_dir. Removed last so a failed run keeps the old copies.
+- name: Remove legacy /etc control-plane files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/personal-agent-infra.paths
+    - /etc/butler-iac
+    - /etc/personal-agent-infra.env
+    - /etc/dotenvx
   tags: [butler-deploy]

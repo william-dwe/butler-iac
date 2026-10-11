@@ -9,7 +9,7 @@ no wiki notes or Butler application code.
 |Path|Owner|Who writes it|
 |---|---|---|
 |This infra checkout|Script-derived root|`ubuntu` only. Agents running as `agentops` (renamed from `hermes`; `/home/hermes` is a compat symlink) deliver changes as a `git apply` patch for the administrator to run as `ubuntu`.|
-|Butler and wiki checkouts|`BUTLER_DIR` and `WIKI_DIR` in `/etc/personal-agent-infra.paths`|`agentops`; wiki only librarian writes after the administrator approves.|
+|Butler and wiki checkouts|`BUTLER_DIR` and `WIKI_DIR` in `~/.config/butler-iac/stack.env`|`agentops`; wiki only librarian writes after the administrator approves.|
 |`/home/ubuntu/services/second-brain-service`|`ubuntu`|Legacy checkout. Retire it after migration; don't add features to it.|
 
 - Before editing any `services/...` path, check its absolute path and owner. Similar-looking copies have been edited by mistake before.
@@ -28,40 +28,40 @@ no wiki notes or Butler application code.
 - Only one user can run the dashboard, because only one process can listen on `:9119`. `scripts/deploy.sh <user>` links the unit, stops the others, and restarts the dashboard, which drops open browser and agent sessions.
 - 9router calls Headroom's `/v1/compress` without a token. For that reason Headroom must not publish a host port or a Tailscale Serve rule. Verify with `docker port headroom` (must be empty) and `tailscale serve status`.
 - The network is locked down by UFW (role `common`, `tasks/firewall.yml`): incoming traffic is denied by default, except `tailscale0` and port 22. The dashboard runs with `--insecure` on `0.0.0.0` and depends on this firewall.
-- 9router is published only on the Tailscale IP (`TAILSCALE_IP` rendered into `/etc/personal-agent-infra.env`; get it with `tailscale ip -4`). Never publish on `0.0.0.0`, because Docker-published ports bypass UFW.
+- 9router is published only on the Tailscale IP (`TAILSCALE_IP` rendered into `~/.config/butler-iac/runtime.env`; get it with `tailscale ip -4`). Never publish on `0.0.0.0`, because Docker-published ports bypass UFW.
 
 ## Layout
 
 ```text
 docker-compose.yml             root project (butler-iac); include:s manifests/*/compose.yml
 manifests/<svc>/compose.yml    one compose file per service
-systemd/                       hermes-dashboard@.service template (EnvironmentFile = /etc/personal-agent-infra.env)
+systemd/                       hermes-dashboard@.service template (EnvironmentFile = ~/.config/butler-iac/runtime.env)
 ansible/                       inventory.yml stores environment vars; playbooks/init.yml initializes host; playbooks/services.yml deploys core services and Butler; backup.yml/restore.yml own migration
-scripts/butler.sh              scoped Butler Compose restart/down/status/logs; reads `/etc/personal-agent-infra.paths`
+scripts/butler.sh              scoped Butler Compose restart/down/status/logs; reads `BUTLER_DIR`/`WIKI_DIR` from `stack.env`
 scripts/deploy.sh [user]       link unit + switch dashboard user
 scripts/menu.sh                whiptail ops panel (status, dashboard controls, hermes sudo)
 scripts/hermes-sudo.sh         sudo ./scripts/hermes-sudo.sh on|off|status
-scripts/dotenv-env.sh          render|status for /etc/personal-agent-infra.env
+scripts/dotenv-env.sh          render|status for ~/.config/butler-iac/runtime.env
 ```
 
 Not tracked (see `.gitignore`): `.env.keys` (dotenvx private key material, never generated here—lives root-only on the VPS), `.dashboard-user`, `data/` (9router DB), `.archive/`. `.env` itself IS tracked, dotenvx-encrypted.
 
 VPS migration (backup old VPS -> `init.yml` on new VPS -> `services.yml` -> restore): see README.md "Migration (existing VPS)".
 
-Butler role writes root-owned `/etc/personal-agent-infra.paths` mode `0644`: exactly absolute `BUTLER_DIR` and `WIKI_DIR` from inventory. Changing live locations requires an approved Butler stop, inventory update, and deploy.
+Butler role writes `BUTLER_DIR` and `WIKI_DIR` (absolute, from inventory) into `~/.config/butler-iac/stack.env`. Changing live locations requires an approved Butler stop, inventory update, and deploy.
 
 ## Architecture diagram
 
 `docs/architecture.{svg,html}` are maintained by Hermes, not by `ubuntu` agents. They predate the single-root-compose change; Hermes should update them to show:
 - one root `docker-compose.yml` (project `butler-iac`) that `include:`s every `manifests/<svc>/compose.yml` (butler, hermes, paseo, 9router, headroom, node-exporter, cadvisor, prometheus, grafana);
 - a shared project default network `butler_default` for all services (accepted isolation regression), plus `app-network` for backend/9router/headroom;
-- secrets from `/etc/butler-iac/stack.env`, applied by the `gitops-pull-apply` timer, with no per-service Ansible roles for 9router or headroom.
+- secrets from `~/.config/butler-iac/stack.env`, applied by the `gitops-pull-apply` timer, with no per-service Ansible roles for 9router or headroom.
 
 ## Env secrets
 
-- dotenvx-encrypted `.env` (committed to this repo) is source of runtime secrets. `/etc/dotenvx/personal-agent-infra.env.keys` is root-owned mode `0600`; only Ansible Vault ciphertext `ansible/group_vars/all/vault.yml` stores it outside VPS. Agents never read either key material. `/etc/personal-agent-infra.env` is root-owned rendered runtime config.
+- dotenvx-encrypted `.env` (committed to this repo) is source of runtime secrets. `~/.config/butler-iac/dotenvx.keys` is root-owned mode `0600`; only Ansible Vault ciphertext `ansible/group_vars/all/vault.yml` stores it outside VPS. Agents never read either key material. `~/.config/butler-iac/runtime.env` is root-owned (0600) rendered runtime config; `stack.env` there is ubuntu-owned (0600) for the GitOps timer. The directory is `/home/ubuntu/.config/butler-iac` (control plane lives under ubuntu, never under the agents' home).
 - Agents never read `ansible/secret.txt`, never run `ansible-vault view|decrypt|edit|encrypt`, and never run `playbooks/init.yml`/`playbooks/services.yml`/`playbooks/backup.yml`/`playbooks/restore.yml` without `--check` unless the administrator approves; `backup.yml` stops services.
-- Agents may run `scripts/dotenv-env.sh status` only. Agents never run `scripts/dotenv-env.sh render`, `dotenvx decrypt`, `dotenvx encrypt` on committed `.env`, or read `/etc/dotenvx/personal-agent-infra.env.keys`. Transferring the dotenvx private key between VPSes is an administrator-only guided console action; agents don't automate or participate in it. Adding a new key via `dotenvx set KEY value -f .env` doesn't need the private key, but still ask the administrator to run it themself—an agent-entered value can't be confirmed without ever appearing in chat.
+- Agents may run `scripts/dotenv-env.sh status` only. Agents never run `scripts/dotenv-env.sh render`, `dotenvx decrypt`, `dotenvx encrypt` on committed `.env`, or read `~/.config/butler-iac/dotenvx.keys`. Transferring the dotenvx private key between VPSes is an administrator-only guided console action; agents don't automate or participate in it. Adding a new key via `dotenvx set KEY value -f .env` doesn't need the private key, but still ask the administrator to run it themself—an agent-entered value can't be confirmed without ever appearing in chat.
 - When changing secret keys or `.env.example`, report key names and ask the administrator to update the encrypted `.env` manually; never ask for or print values in chat.
 
 ## Security-sensitive knobs

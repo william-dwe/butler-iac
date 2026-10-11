@@ -4,8 +4,10 @@ set -euo pipefail
 
 root=$(cd "$(dirname "$0")/.." && pwd)
 encrypted=$root/.env
-keys=/etc/dotenvx/personal-agent-infra.env.keys
-target=/etc/personal-agent-infra.env
+# Control-plane files live with the admin user (ubuntu), outside the agents' home; keys + runtime.env stay root-owned 0600.
+cfg=${BUTLER_IAC_CONFIG:-/home/ubuntu/.config/butler-iac}
+keys=$cfg/dotenvx.keys
+target=$cfg/runtime.env
 helper=$root/scripts/dotenv-env.py
 
 usage() {
@@ -44,7 +46,7 @@ render() {
   chmod 0600 "$rendered"
   mv -f "$rendered" "$target"
   rendered=
-  echo "Rendered /etc/personal-agent-infra.env."
+  echo "Rendered $target."
 }
 
 status_file() {

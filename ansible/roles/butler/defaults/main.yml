@@ -1,8 +1,8 @@
 admin_user: ubuntu
 agent_user: agentops
 butler_data_dir: /var/lib/butler
-butler_paths_file: /etc/personal-agent-infra.paths
-butler_runtime_env: /etc/personal-agent-infra.env
+control_dir: "/home/{{ admin_user }}/.config/butler-iac"
+butler_runtime_env: "{{ control_dir }}/runtime.env"
 butler_review_helper_dir: /usr/local/lib/personal-agent-infra
 butler_review_helper: /usr/local/lib/personal-agent-infra/butler-review-queue.sh
 butler_serve_port: 8444

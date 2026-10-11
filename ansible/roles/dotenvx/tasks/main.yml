@@ -21,12 +21,12 @@
     that: vault_dotenvx_private_key is defined
     fail_msg: "vault_dotenvx_private_key missing: create ansible/group_vars/all/vault.yml (README Ansible section)"
 
-- name: Create dotenvx configuration directory
+- name: Create control-plane configuration directory
   ansible.builtin.file:
-    path: /etc/dotenvx
+    path: "{{ control_dir }}"
     state: directory
-    owner: root
-    group: root
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
     mode: "0700"
 
 - name: Install dotenvx private key
