@@ -2,8 +2,8 @@
 all:
   vars:
     admin_user: ubuntu
-    agent_user: hermes
-    dashboard_user: hermes
+    agent_user: agentops
+    dashboard_user: agentops
     infra_repo_url: https://github.com/william-dwe/butler-iac.git
     infra_dir: "/home/{{ admin_user }}/services/butler-iac"
     # Compose bind-mount root holding ./data/9router.
@@ -12,10 +12,12 @@ all:
     runtime_env: /etc/personal-agent-infra.env
     dotenvx_key_path: /etc/dotenvx/personal-agent-infra.env.keys
     butler_repo_url: git@github.com:william-dwe/butler.git
-    butler_dir: "/home/{{ agent_user }}/services/butler"
+    # Pinned to the legacy path on purpose: container-visible paths and ~260 files of agent data still say
+    # /home/hermes/...; /home/hermes is a compat symlink to the real home (see docs/open-items.md).
+    butler_dir: "/home/hermes/services/butler"
     butler_deploy_ref: main
     wiki_repo_url: https://github.com/william-dwe/second-brain-wiki.git
-    wiki_dir: "/home/{{ agent_user }}/services/second-brain-wiki"
+    wiki_dir: "/home/hermes/services/second-brain-wiki"
   children:
     vps:
       hosts:

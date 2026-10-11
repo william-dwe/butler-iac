@@ -5,7 +5,7 @@ x-hermes: &hermes
   restart: unless-stopped
   volumes:
     # Bind mount of existing state; image HERMES_HOME=/opt/data.
-    - /home/hermes/.hermes:/opt/data
+    - /home/agentops/.hermes:/opt/data
   environment:
     # ponytail: assumes entrypoint honors HERMES_UID/GID; not verified. Match host user hermes (1003).
     - HERMES_UID=1003
@@ -28,15 +28,15 @@ services:
     # 8642 stays unpublished: API key only protects it if not exposed.
     networks: [default]
     volumes:
-      - /home/hermes/.hermes:/opt/data
+      - /home/agentops/.hermes:/opt/data
       # Butler wiki + task DB for scripts/butler-review-queue.sh (librarian runs inside this container).
       - /var/lib/butler:/var/lib/butler
       # /var/lib/butler/wiki is a symlink to WIKI_DIR; mount the target at the same path so it resolves.
       - ${WIKI_DIR:?WIKI_DIR is required}:${WIKI_DIR:?WIKI_DIR is required}
       # Researcher output path referenced by wiki SCHEMA.md (raw/briefings/).
-      - /home/hermes/workspace/research:/home/hermes/workspace/research
+      - /home/agentops/workspace/research:/home/hermes/workspace/research
       # Dedicated workspace: persistent clones of working repos (e.g. butler-backend).
-      - /home/hermes/workspace/repos:/home/hermes/workspace/repos
+      - /home/agentops/workspace/repos:/home/hermes/workspace/repos
   dashboard:
     <<: *hermes
     container_name: hermes-dashboard

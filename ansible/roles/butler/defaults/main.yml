@@ -1,5 +1,5 @@
 admin_user: ubuntu
-agent_user: hermes
+agent_user: agentops
 butler_data_dir: /var/lib/butler
 butler_paths_file: /etc/personal-agent-infra.paths
 butler_runtime_env: /etc/personal-agent-infra.env

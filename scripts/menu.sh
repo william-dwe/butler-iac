@@ -14,7 +14,7 @@ pause() { read -rp $'\nPress Enter to return to the menu...' _; }
 
 status_text() {
   local user note="" unit active holder ip router headroom
-  user=$(cat .dashboard-user 2>/dev/null) || { user=hermes; note=undeployed; }
+  user=$(cat .dashboard-user 2>/dev/null) || { user=agentops; note=undeployed; }
   unit="hermes-dashboard@$user"
   active=$(systemctl list-units 'hermes-dashboard@*' --state=active --plain --no-legend | awk '{print $1}' | xargs)
   holder=$(ps -eo user=,args= | awk '/hermes dashboard/ && /9119/ && !/awk/ {print $1; exit}')
@@ -26,7 +26,7 @@ status_text() {
   # Session groups (id -Gn) vs. account groups (id -Gn $me): differ right after usermod, until re-login.
   local me groups relogin=""
   me=$(id -un)
-  groups=$(id -Gn | tr ' ' '\n' | grep -xE 'sudo|docker|hermes' | xargs)
+  groups=$(id -Gn | tr ' ' '\n' | grep -xE 'sudo|docker|agentops' | xargs)
   id -Gn "$me" | grep -qw docker && ! id -Gn | grep -qw docker && relogin=" (re-login for docker)"
 
   section() { printf '[ %s ]\n' "$1"; }
@@ -59,7 +59,7 @@ status_text() {
 }
 
 pick_user() {
-  local cur; cur=$(cat .dashboard-user 2>/dev/null || echo hermes)
+  local cur; cur=$(cat .dashboard-user 2>/dev/null || echo agentops)
   whiptail --title "$TITLE" --radiolist "Run the dashboard as (space to select):" 12 60 2 \
     hermes "dedicated non-root user" "$([ "$cur" = hermes ] && echo ON || echo OFF)" \
     ubuntu "admin user"              "$([ "$cur" = ubuntu ] && echo ON || echo OFF)" \
@@ -91,7 +91,7 @@ dashboard_menu() {
     2 "Restart dashboard" \
     3 "Follow dashboard logs" \
     b "Back" 3>&1 1>&2 2>&3) || return
-  local user; user=$(cat .dashboard-user 2>/dev/null || echo hermes)
+  local user; user=$(cat .dashboard-user 2>/dev/null || echo agentops)
   case $choice in
     1) switch_user ;;
     2) clear; sudo systemctl restart "hermes-dashboard@$user" && echo restarted; pause ;;

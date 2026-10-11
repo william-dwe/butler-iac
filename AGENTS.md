@@ -8,8 +8,8 @@ no wiki notes or Butler application code.
 
 |Path|Owner|Who writes it|
 |---|---|---|
-|This infra checkout|Script-derived root|`ubuntu` only. Agents running as `hermes` deliver changes as a `git apply` patch for the administrator to run as `ubuntu`.|
-|Butler and wiki checkouts|`BUTLER_DIR` and `WIKI_DIR` in `/etc/personal-agent-infra.paths`|`hermes`; wiki only librarian writes after the administrator approves.|
+|This infra checkout|Script-derived root|`ubuntu` only. Agents running as `agentops` (renamed from `hermes`; `/home/hermes` is a compat symlink) deliver changes as a `git apply` patch for the administrator to run as `ubuntu`.|
+|Butler and wiki checkouts|`BUTLER_DIR` and `WIKI_DIR` in `/etc/personal-agent-infra.paths`|`agentops`; wiki only librarian writes after the administrator approves.|
 |`/home/ubuntu/services/second-brain-service`|`ubuntu`|Legacy checkout. Retire it after migration; don't add features to it.|
 
 - Before editing any `services/...` path, check its absolute path and owner. Similar-looking copies have been edited by mistake before.

@@ -1,10 +1,18 @@
 # Open items
 
 ## Rename host user `hermes` to `agentops` (vendor-neutral)
-Status: break analysis done 2026-10-11; nothing renamed. `agentops` is free (the GitOps account was removed; GitOps runs as `ubuntu`).
+Status: phase 1 (account rename) done 2026-10-11 on the host; phase 2 not started. Host account, group and real home are now `agentops`
+(uid/gid 1003 unchanged); `/home/hermes` is a compatibility symlink to `/home/agentops`.
 
-Why: the account owns Hermes, Paseo and (since 2026-10-11) a copy of omp state, so the name ties the host to one vendor.
+Phase 1 changed: `agent_user`/`dashboard_user` in Ansible, compose host-side bind SOURCES (`/home/agentops/...`), `hermes-sudo.sh`
+(grants sudo to `agentops`; file name `90-hermes-agent` kept to match the `hermes-sudo-expire` unit).
+Deliberately unchanged: container-side paths and `butler_dir`/`wiki_dir` (pinned to `/home/hermes/services/...`), because about 260 files of
+agent data (profiles, skills, scripts, memory JSON) and the wiki `SCHEMA.md` still reference `/home/hermes/...`, and containers have no such compat symlink.
 
+Phase 2 (optional, risky): rewrite those absolute paths, repoint `butler_dir`/`wiki_dir`, then drop the `/home/hermes` symlink. Never edit the upstream
+Hermes checkout (`~/.hermes/hermes-agent`); fix our compose/config instead.
+
+Original break analysis (kept for phase 2):
 Would break if renamed without fixing (host uid/gid 1003, home `/home/hermes`):
 - Ansible: `agent_user: hermes` in `ansible/inventory.yml` (46 references to `agent_user`), plus literal `/home/hermes`
   in `roles/hermes`, `roles/paseo`, `roles/butler`, `playbooks/backup.yml`; `roles/hermes/tasks/user.yml` creates the user.

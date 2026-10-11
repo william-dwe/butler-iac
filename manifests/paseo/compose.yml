@@ -11,15 +11,15 @@ services:
     user: "1003:1003"
     volumes:
       # Identity/auth files (daemon-keypair.json, server-id, push-tokens.json, local-credential, cli-client-id, config.json).
-      - /home/hermes/.paseo:/home/paseo/.paseo
+      - /home/agentops/.paseo:/home/paseo/.paseo
       # Writable target for Hermes CLI exposure; /home/paseo is uid 1000, container runs 1003. Dir created by Ansible.
-      - /home/hermes/.paseo/local-bin:/home/paseo/.local/bin
+      - /home/agentops/.paseo/local-bin:/home/paseo/.local/bin
       # OMP CLI for paseo-omp provider; Ansible-managed stable install path.
       - /opt/omp:/opt/omp:ro
-      - /home/hermes/.hermes:/home/hermes/.hermes
+      - /home/agentops/.hermes:/home/hermes/.hermes
       # OMP state + 9router provider config; owned by hermes (uid 1003), same as the container user.
-      - /home/hermes/.omp:/home/paseo/.omp
-      - /home/hermes/.pi:/home/paseo/.pi
+      - /home/agentops/.omp:/home/paseo/.omp
+      - /home/agentops/.pi:/home/paseo/.pi
     environment:
       - HERMES_HOME=/home/hermes/.hermes
     healthcheck:
