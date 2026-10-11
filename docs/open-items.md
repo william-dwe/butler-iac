@@ -32,5 +32,5 @@ Decide first: whether `HERMES_HOME`/`~/.hermes` (the product's own data dir) sta
   Host wrappers are in `/home/hermes/.local/bin.retired-20261011/`; `/home/hermes/.hermes/hermes-agent` is still used by Paseo's Hermes provider and must not be edited.
 - `ansible/backups/` holds plaintext secrets (archives, old unit files, ~6 GB); delete once you are satisfied with the 2026-10-11 archive.
 - `/home/hermes/.omp` and `/home/hermes/.pi` are a point-in-time copy of the `ubuntu` state and drift.
-- Monitoring (node-exporter, cAdvisor, Prometheus, Grafana) is defined in `services.yml` under `--tags monitoring` but not deployed on this host; `--check` is clean. Deploy needs a decision on exposure (binds `172.17.0.1`).
+- Monitoring (node-exporter, cAdvisor, Prometheus, Grafana) is deployed by the root compose (`manifests/*`) and scraped over the shared `butler_default` network by service name.
 - The Paseo Hermes provider logs `CLI exposure failed: Permission denied: /home/paseo/.local/bin` and retries an interrupted source update on every start (`installs/*/source-completion-pending`). It still answers ACP `initialize`.
