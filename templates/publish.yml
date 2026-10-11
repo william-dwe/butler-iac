@@ -1,5 +1,7 @@
 # Copy to <service-repo>/.github/workflows/publish.yml.
 # One job per image. Single-image repo: keep one job, drop `file`.
+# `bump` repins the digests in william-dwe/butler-iac on main only (the VPS timer then deploys).
+# Needs secrets BUTLER_IAC_APP_ID + BUTLER_IAC_APP_KEY: a GitHub App installed only on butler-iac (Contents write).
 name: publish
 on:
   push:
@@ -19,3 +21,14 @@ jobs:
     with:
       image: ghcr.io/william-dwe/butler-frontend
       file: frontend/Dockerfile
+  bump:
+    if: github.ref == 'refs/heads/main'
+    needs: [backend, frontend]
+    uses: william-dwe/butler-iac/.github/workflows/bump-digest.yml@main
+    with:
+      bumps: |
+        ghcr.io/william-dwe/butler-backend ${{ needs.backend.outputs.digest }}
+        ghcr.io/william-dwe/butler-frontend ${{ needs.frontend.outputs.digest }}
+    secrets:
+      app_id: ${{ secrets.BUTLER_IAC_APP_ID }}
+      private_key: ${{ secrets.BUTLER_IAC_APP_KEY }}

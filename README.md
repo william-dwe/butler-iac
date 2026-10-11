@@ -144,6 +144,7 @@ else gets docker-group access.
 ### Layout
 - `docker-compose.yml` -- root file (project `butler-iac`); only `include:`s manifests.
 - `manifests/<service>/compose.yml` -- one file per service.
+- Digest bumps: service repos call `.github/workflows/bump-digest.yml` after `build-push` on `main` (see `templates/publish.yml`); it runs `scripts/bump-digest.sh` and pushes to `main` using a GitHub App installed only on this repo (Contents write; secrets `BUTLER_IAC_APP_ID`, `BUTLER_IAC_APP_KEY` in the service repos). Manual: `scripts/bump-digest.sh manifests/butler/compose.yml <image> sha256:<digest>`.
 - Image references use `@sha256:...` digests, never `:latest` tags, so a bump is a
   real, auditable file diff.
 

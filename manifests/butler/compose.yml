@@ -1,6 +1,6 @@
 name: butler
 
-# Digests bumped by agentops. Images private on GHCR: `docker login ghcr.io` (read:packages) as ubuntu.
+# Digests bumped by CI (.github/workflows/bump-digest.yml, scripts/bump-digest.sh). Images private on GHCR: `docker login ghcr.io` (read:packages) as ubuntu.
 # Needs BUTLER_* + WIKI_DIR in the environment (see gitops-pull-apply.sh).
 services:
   backend:

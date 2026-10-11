@@ -1,0 +1,59 @@
+# Repins image digests in a manifest of this repo and pushes to main; the gitops-pull-apply
+# timer on the VPS then deploys it. Called from service repos after build-push on main.
+# Auth: a GitHub App installed ONLY on william-dwe/butler-iac with Contents: read/write.
+# Callers pass its id and private key; a short-lived installation token is minted per run.
+name: bump-digest
+on:
+  workflow_call:
+    inputs:
+      manifest:
+        type: string
+        default: manifests/butler/compose.yml
+      bumps:
+        description: One "<image> <sha256:digest>" pair per line
+        type: string
+        required: true
+    secrets:
+      app_id:
+        required: true
+      private_key:
+        required: true
+
+concurrency: bump-digest
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.app_id }}
+          private-key: ${{ secrets.private_key }}
+          owner: william-dwe
+          repositories: butler-iac
+      - uses: actions/checkout@v4
+        with:
+          repository: william-dwe/butler-iac
+          ref: main
+          token: ${{ steps.app.outputs.token }}
+      - name: Repin and push
+        env:
+          MANIFEST: ${{ inputs.manifest }}
+          BUMPS: ${{ inputs.bumps }}
+        run: |
+          set -euo pipefail
+          while read -r image digest; do
+            [ -z "$image" ] || scripts/bump-digest.sh "$MANIFEST" "$image" "$digest"
+          done <<< "$BUMPS"
+          git diff --quiet && { echo "already pinned"; exit 0; }
+          git config user.name butler-ci
+          git config user.email butler-ci@users.noreply.github.com
+          git commit -am "deploy: bump digests ($GITHUB_ACTOR via ${GITHUB_WORKFLOW_REF%%@*})"
+          for i in 1 2 3; do
+            git pull --rebase -q origin main && git push -q origin HEAD:main && exit 0
+            sleep $((i * 3))
+          done
+          exit 1
