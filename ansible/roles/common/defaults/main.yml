@@ -1,5 +1,5 @@
 admin_user: ubuntu
-infra_repo_url: https://github.com/william-dwe/personal-agent-infra.git
+infra_repo_url: https://github.com/william-dwe/butler-iac.git
 infra_dir: "/home/{{ admin_user }}/services/personal-agent-infra"
 butler_iac_repo_url: https://github.com/william-dwe/butler-iac.git
 butler_iac_version: main

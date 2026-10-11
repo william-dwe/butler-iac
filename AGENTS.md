@@ -13,7 +13,7 @@ no wiki notes or Butler application code.
 |`/home/ubuntu/services/second-brain-service`|`ubuntu`|Legacy checkout. Retire it after migration; don't add features to it.|
 
 - Before editing any `services/...` path, check its absolute path and owner. Similar-looking copies have been edited by mistake before.
-- Remote `origin` is the PUBLIC repo github.com/william-dwe/personal-agent-infra. Push only with the administrator's approval. `.env` IS committed (dotenvx-encrypted, see README Secrets); never commit `data/`, real IPs, tokens, or a plaintext `.env`/`.env.keys` (the global `dotenvx protect` git filter blocks this as a safety net).
+- Remote `origin` is the PUBLIC repo github.com/william-dwe/butler-iac. Push only with the administrator's approval. `.env` IS committed (dotenvx-encrypted, see README Secrets); never commit `data/`, real IPs, tokens, or a plaintext `.env`/`.env.keys` (the global `dotenvx protect` git filter blocks this as a safety net).
 - Don't change global Git config. Set the commit identity per command, e.g. `git -c user.name=Ubuntu -c user.email=ubuntu@localhost.localdomain commit`.
 
 ## What runs here
