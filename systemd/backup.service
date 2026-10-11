@@ -1,5 +1,6 @@
 [Unit]
 Description=Encrypted restic backup of agent state
+OnFailure=backup-notify.service
 Wants=network-online.target
 After=network-online.target docker.service
 

@@ -85,6 +85,7 @@
     owner: root
     group: root
     mode: "0600"
+    force: false  # create only: rclone and scripts/gdrive-relogin.sh keep the live token here
   no_log: true
   when:
     - vault_gdrive_client_id is defined
@@ -93,7 +94,8 @@
   register: backup_rclone_conf
   tags: [backup]
 
-# rclone rewrites the token in rclone.conf when it refreshes it; that is expected.
+# rclone refreshes the token inside rclone.conf itself and gdrive-relogin.sh replaces it after a revoke, so the vault
+# copy only seeds the file (force: false). Without vault values, run `sudo scripts/gdrive-relogin.sh --setup`.
 - name: Render off-box backup settings (Google Drive)
   ansible.builtin.copy:
     content: |
@@ -115,6 +117,7 @@
     force: true
   loop:
     - backup.service
+    - backup-notify.service
     - backup.timer
   register: backup_units
   tags: [backup]

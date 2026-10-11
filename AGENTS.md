@@ -64,7 +64,7 @@ Butler role writes `BUTLER_DIR` and `WIKI_DIR` (absolute, from inventory) into `
 
 ## Backups
 
-`backup.timer` runs `scripts/backup.sh` (root) daily; repo `/home/ubuntu/backups/restic`, password `~/.config/butler-iac/backup.pass`, optional off-box config `backup.env`. Agents may read `systemctl status backup.service` and `restic snapshots` output but never print the password file. See README "Backups".
+`backup.timer` runs `scripts/backup.sh` (root) daily; repo `/home/ubuntu/backups/restic`, password `~/.config/butler-iac/backup.pass`, optional off-box config `backup.env`. Agents may read `systemctl status backup.service` and `restic snapshots` output but never print the password file. Failures alert via `backup-notify.service` (Hermes `send`, Telegram). `scripts/gdrive-relogin.sh` handles Drive OAuth; it is an administrator action and prints no secrets. See README "Backups".
 
 ## Security-sensitive knobs
 
