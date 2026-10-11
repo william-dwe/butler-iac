@@ -26,7 +26,7 @@
 
     - name: Upload state archive
       ansible.builtin.copy:
-        src: "{{ backup_file }}"
+        src: "{{ backup_file | realpath }}"
         dest: /var/tmp/pai-restore.tar.zst
         mode: "0600"
       become: false

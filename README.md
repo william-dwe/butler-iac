@@ -10,7 +10,7 @@ Interactive version with summary cards: [docs/architecture.html](docs/architectu
 
 | Component | Runs as / network | Reach it at |
 |---|---|---|
-| Hermes dashboard | `hermes-dashboard@<user>` systemd template | `http://<tailscale-ip>:9119` |
+| Hermes gateway + dashboard | Docker containers `hermes-gateway`, `hermes-dashboard` (Compose, `ansible/roles/hermes`) | `http://<tailscale-ip>:9119` |
 | 9router | Docker container; published host port | `http://<tailscale-ip>:20128` |
 | Headroom | Docker `app-network` only | `http://headroom:8787` |
 | Butler dashboard + API | Compose project `butler` from configured `BUTLER_DIR/compose.yml`; backend joins core Docker network only for 9router | Tailscale HTTPS `:8444` -> host loopback `:3100` |
@@ -70,18 +70,17 @@ Redeploy configured Butler ref:
 ansible-playbook playbooks/services.yml --tags butler-deploy
 ```
 
-Then enable `butler-review-queue.timer` manually, and choose a dashboard user:
+Then enable the review timer manually (Hermes itself runs as Compose; start it with `ansible-playbook playbooks/services.yml --tags hermes,paseo`):
 
 ```bash
 systemctl enable --now butler-review-queue.timer
-./scripts/deploy.sh [user]
 ```
 
 ## Scripts
 
 | Script | Purpose |
 |---|---|
-| `scripts/deploy.sh [user]` | Link units and switch dashboard user. |
+| `scripts/deploy.sh [user]` | Legacy bare-metal systemd install of Hermes. Refuses to run while the `hermes-dashboard` container exists; not part of the Docker setup. |
 | `scripts/menu.sh` | Whiptail control panel for status, dashboard controls, and Hermes sudo. |
 | `scripts/check-headroom.sh` | Read-only 9router-to-Headroom smoke test. |
 | `scripts/hermes-sudo.sh on\|off\|status` | Manage Hermes passwordless sudo grant. |

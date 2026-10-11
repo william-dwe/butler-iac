@@ -22,10 +22,9 @@ deliberately human-reviewed and NOT something OMP or Orchestrator runs unattende
 - `paseo.service` (bare systemd) → one Docker container from `ghcr.io/getpaseo/paseo`
   image, `network_mode: host`, same `~/.paseo` + `~/.hermes` bind mounts, plus a new
   `/opt/omp:/opt/omp:ro` mount for its `paseo-omp` provider.
-- Paseo's "Hermes" ACP provider entry is REMOVED (decided out of scope — see
-  session notes; Paseo can't reach a live Hermes session over network, only a fresh
-  local subprocess, and that subprocess needs a full Python runtime copy we decided
-  wasn't worth it).
+- Paseo's "Hermes" ACP provider is kept: it runs `/home/hermes/.hermes/hermes-agent/.hermes/bin/hermes -p orchestrator acp`
+  from the host checkout, mounted into the container (`HERMES_HOME=/home/hermes/.hermes`). The `omp` provider runs
+  `/opt/omp/bin/omp` with hermes-owned `.omp`/`.pi` mounted in. Do not edit that checkout: it is upstream Hermes code.
 
 ## Rollback point
 Before touching anything: take a real backup.
@@ -113,7 +112,7 @@ documented rollback (stops services, extracts archive, restarts services).
 - `docker compose ... --env-file /etc/personal-agent-infra.env` needs root (file is `root:root 0600`); use `sudo` or Ansible.
 - The first `--tags hermes,paseo` run failed on `--wait` (gateway unhealthy) and never reached paseo; re-run `--tags paseo`.
 - Container start migrates `config.yaml` schema 49 -> 50 (backups in `/home/hermes/.hermes/backups/config/`).
-  Rollback to the bare-metal binary is untested against the new schema.
+  Return to bare metal is not planned (owner decision 2026-10-11), so rollback to the old binary is untested and unsupported.
 - `backup.yml` stops all services/containers (~2.5 min). 9router's real bind mount is `/srv/agent-infra/data/9router`
   (compose project dir `/srv/agent-infra`, not `infra_dir`). `router_data_dirs` in `inventory.yml` now lists both roots;
   `backup.yml` archives whichever exist and `restore.yml` only wipes a `9router` dir the archive replaces.
@@ -124,7 +123,7 @@ documented rollback (stops services, extracts archive, restarts services).
   via `docker exec -u hermes hermes-gateway`. The gateway joins the external `butler_default` network (Butler API at
   `http://backend:8765`) and bind-mounts `/var/lib/butler`; the librarian prompt uses that URL and the container token path.
   The `/usr/local/lib/personal-agent-infra/butler-review-queue.sh` symlink was repointed from `/srv/agent-infra` to this
-  checkout. Paseo<->Hermes/omp integration is intentionally NOT migrated (host-only `hermes`, `paseo-omp` wrappers remain).
+  checkout. Paseo<->Hermes/omp integration was first left out and later added; see the Paseo providers note below.
   Not covered: SCHEMA.md's `/home/hermes/workspace/research/` and `~/backups/second-brain/` host paths do not exist in the container.
 - Research mount: `hermes-gateway` bind-mounts `/home/hermes/workspace/research` (SCHEMA.md `raw/briefings/` source path).
 - Paseo providers now run inside the container. `omp` state moved to hermes ownership: `/home/hermes/.omp` and
@@ -132,6 +131,9 @@ documented rollback (stops services, extracts archive, restarts services).
   plugin) are mounted at `/home/paseo/.omp` and `/home/paseo/.pi`; `~/.paseo/config.json` `agents.providers.omp.command`
   is `/opt/omp/bin/omp` and `providers.hermes.command` is `/home/hermes/.hermes/hermes-agent/.hermes/bin/hermes -p orchestrator acp`
   (depends on that host checkout; backup of the old config: `config.json.pre-omp-move`). Do NOT set `PI_CODING_AGENT_DIR`
-  in the container: omp then fails to load its native addon. The `paseo-omp` sudo wrapper and `/etc/sudoers.d/paseo-omp` are now unused.
+  in the container: omp then fails to load its native addon. The `paseo-omp` sudo wrapper and `/etc/sudoers.d/paseo-omp` were removed 2026-10-11; the host wrappers are in `/home/hermes/.local/bin.retired-20261011/`.
+- Never run `hermes` from the checkout with a scratch `HERMES_HOME`: its launcher rewrites itself from `HERMES_HOME` and triggers a source update/build inside the live checkout (this broke the Paseo Hermes provider once).
+- `backup.yml` now also archives `~/.paseo` (minus `models/` and `*.log`) and `~/workspace`. `restore.yml` resolves `backup_file` to an absolute path.
+- GitOps: `common` role now installs `gitops-pull-apply.{service,timer}` (linked from this checkout, runs as `ubuntu`) and clones `butler-iac` to `/srv/deploy-manifests` owned by `ubuntu`. The unused `deploy` group and `agentops` system account are removed from the repo; `agentops` is free as a rename target.
 - `/home/ubuntu/.omp` and `/home/ubuntu/.pi` are still the live state of the admin omp session; the hermes copies were taken
   2026-10-11 and are NOT kept in sync. `backup.yml` archives both.

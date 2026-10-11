@@ -32,9 +32,11 @@
             --exclude=home/{{ agent_user }}/.hermes/hermes-agent
             --exclude=home/{{ agent_user }}/.hermes/cache
             --exclude=home/{{ agent_user }}/.hermes/logs
+            --exclude=home/{{ agent_user }}/.paseo/models
+            --exclude=home/{{ agent_user }}/.paseo/*.log
             --exclude=*.sock
             {{ data_state.results | selectattr('stat.exists') | map(attribute='item') | map('regex_replace', '^/', '') | join(' ') }} var/lib/butler
-            home/{{ agent_user }}/.hermes home/{{ agent_user }}/.local/bin
+            home/{{ agent_user }}/.hermes home/{{ agent_user }}/.local/bin home/{{ agent_user }}/.paseo home/{{ agent_user }}/workspace
             {{ 'opt/omp' if omp_state.results[0].stat.exists else '' }}
             {{ 'home/' ~ admin_user ~ '/.omp' if omp_state.results[1].stat.exists else '' }}
             {{ 'home/' ~ agent_user ~ '/.omp' if omp_state.results[2].stat.exists else '' }}

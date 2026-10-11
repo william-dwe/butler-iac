@@ -21,18 +21,3 @@
         exec zsh
       fi
     insertafter: EOF
-
-- name: Create deploy group
-  ansible.builtin.group:
-    name: deploy
-    system: true
-
-# ubuntu stays out of deploy; agentops stays out of docker (ubuntu is the only docker-group account).
-- name: Create agentops system account
-  ansible.builtin.user:
-    name: agentops
-    system: true
-    shell: /usr/sbin/nologin
-    create_home: true
-    groups: deploy
-    append: true

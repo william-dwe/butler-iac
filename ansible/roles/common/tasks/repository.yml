@@ -9,9 +9,9 @@
   ansible.builtin.file:
     path: "{{ deploy_manifests_dir }}"
     state: directory
-    owner: agentops
-    group: deploy
-    mode: "0775"
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0755"
 
 - name: Clone butler-iac manifest repository
   ansible.builtin.git:
@@ -19,4 +19,23 @@
     dest: "{{ deploy_manifests_dir }}/butler-iac"
     version: "{{ butler_iac_version }}"
     update: true
-  become_user: agentops
+  become_user: "{{ admin_user }}"
+
+# ubuntu (docker group) pulls and applies; units are linked from this checkout.
+- name: Link GitOps pull-apply units
+  ansible.builtin.file:
+    src: "{{ infra_dir }}/systemd/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    state: link
+    force: true
+  loop:
+    - gitops-pull-apply.service
+    - gitops-pull-apply.timer
+  register: gitops_units
+
+- name: Enable GitOps pull-apply timer
+  ansible.builtin.systemd:
+    name: gitops-pull-apply.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ gitops_units.changed }}"

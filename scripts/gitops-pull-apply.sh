@@ -5,8 +5,7 @@
 set -uo pipefail
 repo=${GITOPS_REPO:-/srv/deploy-manifests/butler-iac}
 
-# repo is owned by agentops; ubuntu needs safe.directory to pull it.
-git -c safe.directory="$repo" -C "$repo" pull --ff-only || { echo "git pull failed in $repo" >&2; exit 1; }
+git -C "$repo" pull --ff-only || { echo "git pull failed in $repo" >&2; exit 1; }
 
 failed=0
 for dir in "$repo"/manifests/*/; do
