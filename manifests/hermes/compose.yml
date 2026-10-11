@@ -31,6 +31,8 @@ services:
       - /home/hermes/.hermes:/opt/data
       # Butler wiki + task DB for scripts/butler-review-queue.sh (librarian runs inside this container).
       - /var/lib/butler:/var/lib/butler
+      # /var/lib/butler/wiki is a symlink to WIKI_DIR; mount the target at the same path so it resolves.
+      - ${WIKI_DIR:?WIKI_DIR is required}:${WIKI_DIR:?WIKI_DIR is required}
       # Researcher output path referenced by wiki SCHEMA.md (raw/briefings/).
       - /home/hermes/workspace/research:/home/hermes/workspace/research
       # Dedicated workspace: persistent clones of working repos (e.g. butler-backend).
