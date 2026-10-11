@@ -70,8 +70,11 @@
   when: vault_backup_password is not defined
   tags: [backup]
 
-# Off-box copy to Google Drive through rclone. Values live in Ansible Vault; without all three the backup stays
-# local-only. Scope drive.file: the token can only see files this backup created, not the rest of the Drive.
+# Off-box copy to Google Drive through rclone. Seeds rclone.conf from the vault on a fresh host (client id + secret,
+# and the token only if one was stored; scope drive.file = only files this backup created). Without a token the
+# first backup fails with an auth error and the Telegram alert carries the relogin link; or run
+# `sudo scripts/gdrive-relogin.sh --setup`. The file is create-only (force: false): rclone refreshes the token in
+# it and gdrive-relogin.sh replaces it, so the vault copy never overwrites the live token.
 - name: Render rclone config for Google Drive
   ansible.builtin.copy:
     content: |
@@ -80,22 +83,21 @@
       client_id = {{ vault_gdrive_client_id }}
       client_secret = {{ vault_gdrive_client_secret }}
       scope = drive.file
+      {% if vault_gdrive_token is defined %}
       token = {{ vault_gdrive_token }}
+      {% endif %}
     dest: "{{ control_dir }}/rclone.conf"
     owner: root
     group: root
     mode: "0600"
-    force: false  # create only: rclone and scripts/gdrive-relogin.sh keep the live token here
+    force: false
   no_log: true
   when:
     - vault_gdrive_client_id is defined
     - vault_gdrive_client_secret is defined
-    - vault_gdrive_token is defined
   register: backup_rclone_conf
   tags: [backup]
 
-# rclone refreshes the token inside rclone.conf itself and gdrive-relogin.sh replaces it after a revoke, so the vault
-# copy only seeds the file (force: false). Without vault values, run `sudo scripts/gdrive-relogin.sh --setup`.
 - name: Render off-box backup settings (Google Drive)
   ansible.builtin.copy:
     content: |
@@ -106,6 +108,7 @@
     owner: root
     group: root
     mode: "0600"
+    force: false
   when: backup_rclone_conf is not skipped
   tags: [backup]
 
