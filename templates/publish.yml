@@ -1,0 +1,21 @@
+# Copy to <service-repo>/.github/workflows/publish.yml.
+# One job per image. Single-image repo: keep one job, drop `file`.
+name: publish
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+permissions:
+  contents: read
+  packages: write
+jobs:
+  backend:
+    uses: william-dwe/butler-iac/.github/workflows/build-push.yml@main
+    with:
+      image: ghcr.io/william-dwe/butler-backend
+      file: backend/Dockerfile
+  frontend:
+    uses: william-dwe/butler-iac/.github/workflows/build-push.yml@main
+    with:
+      image: ghcr.io/william-dwe/butler-frontend
+      file: frontend/Dockerfile
