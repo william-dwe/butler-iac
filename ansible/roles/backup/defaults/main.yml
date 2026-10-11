@@ -1,0 +1,4 @@
+admin_user: ubuntu
+infra_dir: "/home/{{ admin_user }}/services/butler-iac"
+control_dir: "/home/{{ admin_user }}/.config/butler-iac"
+backup_local_repo_dir: "/home/{{ admin_user }}/backups"

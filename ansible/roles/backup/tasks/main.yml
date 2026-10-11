@@ -1,0 +1,73 @@
+# Daily encrypted restic backup of agent state (scripts/backup.sh). Default repository is local; for off-box put
+# RESTIC_REPOSITORY + credentials in {{ control_dir }}/backup.env (root 0600). See README "Backups".
+- name: Install restic
+  ansible.builtin.apt:
+    name: restic
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
+  tags: [backup]
+
+- name: Create control-plane configuration directory
+  ansible.builtin.file:
+    path: "{{ control_dir }}"
+    state: directory
+    owner: "{{ admin_user }}"
+    group: "{{ admin_user }}"
+    mode: "0700"
+  tags: [backup]
+
+- name: Create local backup repository directory
+  ansible.builtin.file:
+    path: "{{ backup_local_repo_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  tags: [backup]
+
+# Generated once and never overwritten. Losing it makes every backup unreadable: copy it off the host.
+- name: Generate restic repository password
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      umask 077
+      head -c 32 /dev/urandom | base64 > {{ (control_dir ~ '/backup.pass') | quote }}
+    executable: /bin/bash
+    creates: "{{ control_dir }}/backup.pass"
+  register: backup_pass
+  tags: [backup]
+
+- name: Restrict restic password file
+  ansible.builtin.file:
+    path: "{{ control_dir }}/backup.pass"
+    owner: root
+    group: root
+    mode: "0600"
+  tags: [backup]
+
+- name: Remind to save the restic password off the host
+  ansible.builtin.debug:
+    msg: "NEW restic password generated at {{ control_dir }}/backup.pass. Copy it to your password manager now (sudo cat it); backups are unreadable without it."
+  when: backup_pass.changed
+  tags: [backup]
+
+- name: Link backup units
+  ansible.builtin.file:
+    src: "{{ infra_dir }}/systemd/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    state: link
+    force: true
+  loop:
+    - backup.service
+    - backup.timer
+  register: backup_units
+  tags: [backup]
+
+- name: Enable backup timer
+  ansible.builtin.systemd:
+    name: backup.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ backup_units.changed }}"
+  tags: [backup]

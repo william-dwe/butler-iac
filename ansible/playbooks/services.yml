@@ -13,3 +13,6 @@
       tags: [hermes, never]
     - role: paseo
       tags: [paseo, never]
+    # Daily encrypted restic backup of /home/agentops state (scripts/backup.sh).
+    - role: backup
+      tags: [backup]
