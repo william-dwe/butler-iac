@@ -21,7 +21,7 @@ no wiki notes or Butler application code.
 |Component|Defined in|Runs as|Reach it at|
 |---|---|---|---|
 |Hermes dashboard (web + TUI)|`systemd/hermes-dashboard@.service`|`hermes-dashboard@<user>` (`hermes` or `ubuntu`, stored in `.dashboard-user`)|`http://<tailscale-ip>:9119`|
-|Butler dashboard + API|configured `BUTLER_DIR/compose.yml` project `butler`|containers; backend joins core network only for 9router|Tailscale HTTPS `:8444` -> host loopback `:3100` -> `127.0.0.1:8765`|
+|Butler dashboard + API|`manifests/butler/compose.yml` project `butler`|containers; backend joins core network only for 9router|Tailscale HTTPS `:8444` -> host loopback `:3100` -> `127.0.0.1:8765`|
 |9router (LLM router)|`docker-compose.yml`|container `9router`|`http://<tailscale-ip>:20128`|
 |Headroom (prompt compression)|`docker-compose.yml`|container `headroom`|`http://headroom:8787`, Docker network only|
 

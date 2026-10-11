@@ -1,9 +1,0 @@
-# Cross-role wiring. Containers reach host-published exporters via the default bridge gateway.
-monitoring_docker_gateway: 172.17.0.1
-node_exporter_bind: "{{ monitoring_docker_gateway }}"
-cadvisor_bind: "{{ monitoring_docker_gateway }}"
-prometheus_scrape_targets:
-  node: ["{{ monitoring_docker_gateway }}:{{ node_exporter_port }}"]
-  cadvisor: ["{{ monitoring_docker_gateway }}:{{ cadvisor_port }}"]
-grafana_prometheus_url: "http://{{ monitoring_docker_gateway }}:{{ prometheus_port }}"
-prometheus_bind: "{{ monitoring_docker_gateway }}"

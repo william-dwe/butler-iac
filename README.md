@@ -13,7 +13,7 @@ Interactive version with summary cards: [docs/architecture.html](docs/architectu
 | Hermes gateway + dashboard | Docker containers `hermes-gateway`, `hermes-dashboard` (Compose, `ansible/roles/hermes`) | `http://<tailscale-ip>:9119` |
 | 9router | Docker container; published host port | `http://<tailscale-ip>:20128` |
 | Headroom | Docker `app-network` only | `http://headroom:8787` |
-| Butler dashboard + API | Compose project `butler` from configured `BUTLER_DIR/compose.yml`; backend joins core Docker network only for 9router | Tailscale HTTPS `:8444` -> host loopback `:3100` |
+| Butler dashboard + API | Compose project `butler` from `manifests/butler/compose.yml` (GHCR digests, applied by `gitops-pull-apply`); backend joins core Docker network only for 9router | Tailscale HTTPS `:8444` -> host loopback `:3100` |
 
 ## Quick start (new VPS)
 
@@ -130,7 +130,7 @@ dotenvx decrypt -f .env -fk /etc/dotenvx/personal-agent-infra.env.keys --stdout
 - 9router is published only on `TAILSCALE_IP`; Docker-published ports bypass UFW, so never bind `0.0.0.0`.
 - Headroom must not publish host port or Tailscale Serve rule; 9router calls `/v1/compress` without token.
 - `scripts/hermes-sudo.sh` grant and `docker` group membership are root-equivalent.
-- Butler runs only through configured `BUTLER_DIR/compose.yml`; host ports remain loopback. Backend joins `butler-iac_app-network` only for 9router; frontend stays private.
+- Butler runs only through `manifests/butler/compose.yml`; host ports remain loopback. Backend joins `butler-iac_app-network` only for 9router; frontend stays private.
 - `/var/lib/butler` is shared through named ACLs by `hermes` and `ubuntu`. Butler container runs as root only for portable bind-mount ownership; do not add `hermes` to Docker group.
 
 ## GitOps manifests
@@ -147,9 +147,12 @@ else gets docker-group access.
   real, auditable file diff.
 
 ### Scope
-Only butler-backend and butler-frontend are pulled from Williams private GCR; every
+Only butler-backend and butler-frontend are pulled from William's private GHCR (`docker login ghcr.io` as `ubuntu`, `read:packages`); every
 other image here is a public upstream vendor image (nousresearch/hermes-agent,
 ghcr.io/getpaseo/paseo, prom/*, grafana/grafana, gcr.io/cadvisor/cadvisor).
+
+Services applied by the timer: butler, node-exporter, cadvisor, prometheus, grafana. A service
+needing secrets reads `/etc/butler-iac/<svc>.env` (`root:ubuntu 0640`; the `butler` role renders `butler.env`).
 
 9router and headroom are intentionally NOT managed here -- pinned manually, out of
 scope for GitOps auto-deploy per project decision.

@@ -1,5 +1,0 @@
-node_exporter_dir: /opt/monitoring/node-exporter
-node_exporter_project: node-exporter
-node_exporter_image: prom/node-exporter@sha256:d00a542e409ee618a4edc67da14dd48c5da66726bbd5537ab2af9c1dfc442c8a # v1.9.1
-node_exporter_bind: 127.0.0.1
-node_exporter_port: 9100

@@ -3,5 +3,5 @@ datasources:
   - name: Prometheus
     type: prometheus
     access: proxy
-    url: {{ grafana_prometheus_url }}
+    url: http://172.17.0.1:9090
     isDefault: true

@@ -1,7 +1,7 @@
-name: {{ node_exporter_project }}
+name: node-exporter
 services:
   node-exporter:
-    image: {{ node_exporter_image }}
+    image: prom/node-exporter@sha256:d00a542e409ee618a4edc67da14dd48c5da66726bbd5537ab2af9c1dfc442c8a
     container_name: node-exporter
     restart: unless-stopped
     pid: host
@@ -11,7 +11,7 @@ services:
       - --path.rootfs=/rootfs
       - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc|var/lib/docker/.+)($$|/)
     ports:
-      - "{{ node_exporter_bind }}:{{ node_exporter_port }}:9100"
+      - "172.17.0.1:9100:9100"
     volumes:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro

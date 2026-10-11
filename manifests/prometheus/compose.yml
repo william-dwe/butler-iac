@@ -1,15 +1,15 @@
-name: {{ prometheus_project }}
+name: prometheus
 services:
   prometheus:
-    image: {{ prometheus_image }}
+    image: prom/prometheus@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996
     container_name: prometheus
     restart: unless-stopped
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time={{ prometheus_retention }}
+      - --storage.tsdb.retention.time=15d
     ports:
-      - "{{ prometheus_bind }}:{{ prometheus_port }}:9090"
+      - "172.17.0.1:9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus

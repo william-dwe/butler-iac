@@ -1,15 +1,11 @@
-name: {{ grafana_project }}
+name: grafana
 services:
   grafana:
-    image: {{ grafana_image }}
+    image: grafana/grafana@sha256:6ac590e7cabc2fbe8d7b8fc1ce9c9f0582177b334e0df9c927ebd9670469440f
     container_name: grafana
     restart: unless-stopped
-{% if grafana_admin_password %}
-    environment:
-      GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
-{% endif %}
     ports:
-      - "{{ grafana_bind }}:{{ grafana_port }}:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
       - ./provisioning/datasources:/etc/grafana/provisioning/datasources:ro

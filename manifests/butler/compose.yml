@@ -1,0 +1,53 @@
+name: butler
+
+# Digests bumped by agentops. Images private on GHCR: `docker login ghcr.io` (read:packages) as ubuntu.
+# Needs BUTLER_* + WIKI_DIR in the environment (see gitops-pull-apply.sh).
+services:
+  backend:
+    image: ghcr.io/william-dwe/butler-backend@sha256:2b9613adb8fdba23b27f91d0ca9c4ac9388a922c2fcbb4ff0cb5a17acd065f93
+    restart: unless-stopped
+    user: "0:0"
+    environment:
+      BUTLER_BIND: "0.0.0.0"
+      BUTLER_DATA: /data
+      BUTLER_LOGIN: ${BUTLER_LOGIN:?BUTLER_LOGIN required}
+      BUTLER_ORIGIN: ${BUTLER_ORIGIN:?BUTLER_ORIGIN is required}
+      BUTLER_WEB_ORIGIN: ${BUTLER_WEB_ORIGIN:?BUTLER_WEB_ORIGIN is required}
+      BUTLER_ICAL_URL: ${BUTLER_ICAL_URL:-}
+      BUTLER_9ROUTER_URL: http://9router:20128
+      BUTLER_9ROUTER_TOKEN: ${BUTLER_9ROUTER_TOKEN:-}
+      BUTLER_LIBRARIAN_TOKEN_SHA256: ${BUTLER_LIBRARIAN_TOKEN_SHA256:-}
+      BUTLER_LLM_BASE_URL: http://9router:20128/v1
+      BUTLER_LLM_API_KEY: ${BUTLER_LLM_API_KEY:-}
+      BUTLER_LLM_MODEL: ${BUTLER_LLM_MODEL:-}
+    ports:
+      - 127.0.0.1:8765:8765
+    volumes:
+      - /var/lib/butler:/data
+      - type: bind
+        source: ${WIKI_DIR:?WIKI_DIR is required}
+        target: ${WIKI_DIR:?WIKI_DIR is required}
+        read_only: true
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - default
+      - butler-iac_app-network
+
+  frontend:
+    image: ghcr.io/william-dwe/butler-frontend@sha256:9c7f60c2361b8676bc17975757b84bbb6418eac79a2850c18ddb6bf8468ff232
+    restart: unless-stopped
+    environment:
+      BUTLER_API: http://backend:8765
+      BUTLER_LOGIN: ${BUTLER_LOGIN:?BUTLER_LOGIN is required}
+      BUTLER_ORIGIN: ${BUTLER_ORIGIN:?BUTLER_ORIGIN is required}
+      BUTLER_WEB_ORIGIN: ${BUTLER_WEB_ORIGIN:?BUTLER_WEB_ORIGIN is required}
+    ports:
+      - 127.0.0.1:3100:3100
+
+networks:
+  butler-iac_app-network:
+    external: true

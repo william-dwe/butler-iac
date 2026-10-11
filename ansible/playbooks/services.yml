@@ -9,14 +9,7 @@
     - role: butler
       tags: [butler-deploy]
       when: "'butler-deploy' in ansible_run_tags"
-    - role: node-exporter
-      tags: [node-exporter, monitoring]
-    - role: cadvisor
-      tags: [cadvisor, monitoring]
-    - role: prometheus
-      tags: [prometheus, monitoring]
-    - role: grafana
-      tags: [grafana, monitoring]
+    # node-exporter, cadvisor, prometheus, grafana: applied by gitops-pull-apply (manifests/).
     # Cutover-only: the bare-systemd units on :9119/:6767 must be stopped first.
     # These never run implicitly; invoke explicitly with --tags hermes or --tags paseo.
     - role: hermes

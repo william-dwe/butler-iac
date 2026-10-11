@@ -191,79 +191,50 @@
   when: butler_legacy_units.changed
   tags: [butler-deploy]
 
-- name: Validate Butler Compose configuration
-  ansible.builtin.command:
-    argv:
-      - docker
-      - compose
-      - --project-directory
-      - "{{ butler_dir }}"
-      - -f
-      - "{{ butler_dir }}/compose.yml"
-      - --env-file
-      - "{{ butler_runtime_env }}"
-      - config
-      - --quiet
-  environment:
-    WIKI_DIR: "{{ wiki_dir }}"
-  changed_when: false
+- name: Create GitOps env directory
+  ansible.builtin.file:
+    path: /etc/butler-iac
+    state: directory
+    owner: root
+    group: "{{ admin_user }}"
+    mode: "0750"
   tags: [butler-deploy]
 
-- name: Build Butler images
-  ansible.builtin.command:
-    argv:
-      - docker
-      - compose
-      - --project-directory
-      - "{{ butler_dir }}"
-      - -f
-      - "{{ butler_dir }}/compose.yml"
-      - --env-file
-      - "{{ butler_runtime_env }}"
-      - build
-  environment:
-    WIKI_DIR: "{{ wiki_dir }}"
-  changed_when: false
-  tags: [butler-deploy]
-
-- name: Export Butler CLI from backend image
+# gitops-pull-apply runs as admin_user and cannot read the root-only runtime env.
+# Hand it only the keys manifests/butler/compose.yml interpolates.
+- name: Render Butler GitOps env
   ansible.builtin.shell:
     cmd: |
       set -euo pipefail
-      compose=(docker compose --project-directory {{ butler_dir | quote }} -f {{ (butler_dir ~ '/compose.yml') | quote }} --env-file {{ butler_runtime_env | quote }})
+      tmp=$(mktemp /etc/butler-iac/.butler.env.XXXXXX)
+      trap 'rm -f "$tmp"' EXIT
+      { grep -E '^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY)=' {{ butler_runtime_env | quote }} || true
+        printf 'WIKI_DIR=%s\n' {{ wiki_dir | quote }}; } > "$tmp"
+      chown root:{{ admin_user }} "$tmp"
+      chmod 0640 "$tmp"
+      mv -f "$tmp" /etc/butler-iac/butler.env
+      trap - EXIT
+    executable: /bin/bash
+  changed_when: false
+  tags: [butler-deploy]
+
+- name: Export Butler CLI from GHCR backend image
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      image=$(sed -n 's/^ *image: *\(ghcr.io\/william-dwe\/butler-backend@sha256:[a-f0-9]*\).*/\1/p' {{ (infra_dir ~ '/manifests/butler/compose.yml') | quote }})
+      [ -n "$image" ]
       tmp=$(mktemp /usr/local/bin/.butler.XXXXXX)
-      cleanup() {
-        rm -f "$tmp"
-        "${compose[@]}" rm -f backend >/dev/null || true
-      }
-      trap cleanup EXIT
-      WIKI_DIR={{ wiki_dir | quote }} "${compose[@]}" create backend
-      container=$(WIKI_DIR={{ wiki_dir | quote }} "${compose[@]}" ps --all --quiet backend)
-      [ -n "$container" ]
-      docker cp "$container:/usr/local/bin/butler" "$tmp"
+      cid=
+      trap 'rm -f "$tmp"; [ -z "$cid" ] || docker rm -f "$cid" >/dev/null' EXIT
+      cid=$(docker create "$image")
+      docker cp "$cid:/usr/local/bin/butler" "$tmp"
       chown root:root "$tmp"
       chmod 0755 "$tmp"
       mv -f "$tmp" /usr/local/bin/butler
       tmp=
     executable: /bin/bash
-  changed_when: false
-  tags: [butler-deploy]
-
-- name: Start Butler Compose services
-  ansible.builtin.command:
-    argv:
-      - docker
-      - compose
-      - --project-directory
-      - "{{ butler_dir }}"
-      - -f
-      - "{{ butler_dir }}/compose.yml"
-      - --env-file
-      - "{{ butler_runtime_env }}"
-      - up
-      - -d
-      - --wait
   environment:
-    WIKI_DIR: "{{ wiki_dir }}"
+    DOCKER_CONFIG: "/home/{{ admin_user }}/.docker"  # GHCR login lives with admin_user
   changed_when: false
   tags: [butler-deploy]

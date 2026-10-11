@@ -1,9 +1,0 @@
-prometheus_dir: /opt/monitoring/prometheus
-prometheus_project: prometheus
-prometheus_image: prom/prometheus@sha256:63805ebb8d2b3920190daf1cb14a60871b16fd38bed42b857a3182bc621f4996 # v3.5.0
-prometheus_bind: 127.0.0.1
-prometheus_port: 9090
-prometheus_retention: 15d
-prometheus_scrape_interval: 30s
-# job name -> list of host:port targets; wired in group_vars/all/monitoring.yml
-prometheus_scrape_targets: {}

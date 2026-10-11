@@ -1,9 +1,0 @@
-grafana_dir: /opt/monitoring/grafana
-grafana_project: grafana
-grafana_image: grafana/grafana@sha256:6ac590e7cabc2fbe8d7b8fc1ce9c9f0582177b334e0df9c927ebd9670469440f # 12.1.0
-grafana_bind: 127.0.0.1
-grafana_port: 3000
-# Prometheus datasource URL; wired in group_vars/all/monitoring.yml. Empty = no datasource.
-grafana_prometheus_url: ""
-# Optional; unset keeps Grafana default (admin/admin, forced change on first login). Supply from vault.
-grafana_admin_password: ""

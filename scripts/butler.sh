@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/.." && pwd)
-env=/etc/personal-agent-infra.env
+env=/etc/butler-iac/butler.env
 mapfile -d '' -t paths < <("$root/scripts/butler-paths.sh")
 [ "${#paths[@]}" -eq 2 ] || { echo "Invalid Butler path configuration." >&2; exit 1; }
 butler=${paths[0]}
@@ -18,7 +18,7 @@ case $1 in restart|down|status|logs) ;; *) usage ;; esac
 sudo test -d "$butler/.git" && sudo test -d "$wiki/.git" || { echo "Missing configured Butler or wiki checkout." >&2; exit 1; }
 sudo test -f "$env" && ! sudo test -L "$env" || { echo "Missing environment file: $env" >&2; exit 1; }
 
-compose=(sudo env "WIKI_DIR=$wiki" docker compose --project-directory "$butler" -f "$butler/compose.yml" --env-file "$env")
+compose=(sudo docker compose --project-directory "$root/manifests/butler" -f "$root/manifests/butler/compose.yml" --env-file "$env")
 
 case $1 in
   restart) "${compose[@]}" restart ;;
