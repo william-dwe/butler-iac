@@ -8,9 +8,6 @@
 # Python bytecode cache
 __pycache__/
 
-# Local choice of dashboard user (see scripts/deploy.sh)
-.dashboard-user
-
 # Persistent data (includes data/vault/, the Obsidian second-brain vault; never commit)
 data/
 .archive/

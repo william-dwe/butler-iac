@@ -26,8 +26,20 @@
     mode: "0700"
   tags: [backup]
 
-# Generated once and never overwritten. Losing it makes every backup unreadable: copy it off the host.
-- name: Generate restic repository password
+# Preferred: the restic password lives in Ansible Vault (vault_backup_password), like the dotenvx key, so it survives
+# loss of this host. Fallback: generated once on the host (then copy it into the vault; see README "Backups").
+- name: Install restic repository password from the vault
+  ansible.builtin.copy:
+    content: "{{ vault_backup_password }}"
+    dest: "{{ control_dir }}/backup.pass"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  when: vault_backup_password is defined
+  tags: [backup]
+
+- name: Generate restic repository password (no vault value defined)
   ansible.builtin.shell:
     cmd: |
       set -euo pipefail
@@ -36,6 +48,7 @@
     executable: /bin/bash
     creates: "{{ control_dir }}/backup.pass"
   register: backup_pass
+  when: vault_backup_password is not defined
   tags: [backup]
 
 - name: Restrict restic password file
@@ -44,13 +57,15 @@
     owner: root
     group: root
     mode: "0600"
-  when: not (ansible_check_mode and backup_pass.changed)
+  when: vault_backup_password is defined or not (ansible_check_mode and backup_pass.changed)
   tags: [backup]
 
-- name: Remind to save the restic password off the host
+- name: Remind to put the generated restic password into the vault
   ansible.builtin.debug:
-    msg: "NEW restic password generated at {{ control_dir }}/backup.pass. Copy it to your password manager now (sudo cat it); backups are unreadable without it."
-  when: backup_pass.changed
+    msg: >-
+      The restic password at {{ control_dir }}/backup.pass exists only on this host. Add it to Ansible Vault as
+      vault_backup_password (README "Backups") so backups stay readable if the host is lost.
+  when: vault_backup_password is not defined
   tags: [backup]
 
 - name: Link backup units

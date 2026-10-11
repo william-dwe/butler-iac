@@ -8,7 +8,7 @@ no wiki notes or Butler application code.
 
 |Path|Owner|Who writes it|
 |---|---|---|
-|This infra checkout|Script-derived root|`ubuntu` only. Agents running as `agentops` (renamed from `hermes`; `/home/hermes` is a compat symlink) deliver changes as a `git apply` patch for the administrator to run as `ubuntu`.|
+|This infra checkout|Script-derived root|`ubuntu` only. Agents running as `agentops` (renamed from `hermes`; the `/home/hermes` symlink was dropped, all host data lives under `/home/agentops`) deliver changes as a `git apply` patch for the administrator to run as `ubuntu`.|
 |Butler and wiki checkouts|`BUTLER_DIR` and `WIKI_DIR` in `~/.config/butler-iac/stack.env`|`agentops`; wiki only librarian writes after the administrator approves.|
 |`/home/ubuntu/services/second-brain-service`|`ubuntu`|Legacy checkout. Retire it after migration; don't add features to it.|
 
@@ -20,12 +20,12 @@ no wiki notes or Butler application code.
 
 |Component|Defined in|Runs as|Reach it at|
 |---|---|---|---|
-|Hermes dashboard (web + TUI)|`systemd/hermes-dashboard@.service`|`hermes-dashboard@<user>` (`hermes` or `ubuntu`, stored in `.dashboard-user`)|`http://<tailscale-ip>:9119`|
+|Hermes gateway + dashboard (web + TUI)|`manifests/hermes/compose.yml`|containers `hermes-gateway`, `hermes-dashboard`|`http://<tailscale-ip>:9119`|
 |Butler dashboard + API|`manifests/butler/compose.yml` project `butler-iac`|containers; shared default network `butler_default`|Tailscale HTTPS `:8444` -> host loopback `:3100` -> `127.0.0.1:8765`|
 |9router (LLM router)|`manifests/9router/compose.yml`|container `9router`|`http://<tailscale-ip>:20128`|
 |Headroom (prompt compression)|`manifests/headroom/compose.yml`|container `headroom`|`http://headroom:8787`, Docker network only|
 
-- Only one user can run the dashboard, because only one process can listen on `:9119`. `scripts/deploy.sh <user>` links the unit, stops the others, and restarts the dashboard, which drops open browser and agent sessions.
+- The dashboard runs as the `hermes-dashboard` container and owns `:9119`. Restarting it drops open browser and agent sessions. The old per-user systemd units (`hermes-dashboard@<user>`) are retired since the Docker cutover.
 - 9router calls Headroom's `/v1/compress` without a token. For that reason Headroom must not publish a host port or a Tailscale Serve rule. Verify with `docker port headroom` (must be empty) and `tailscale serve status`.
 - The network is locked down by UFW (role `common`, `tasks/firewall.yml`): incoming traffic is denied by default, except `tailscale0` and port 22. The dashboard runs with `--insecure` on `0.0.0.0` and depends on this firewall.
 - 9router is published only on the Tailscale IP (`TAILSCALE_IP` rendered into `~/.config/butler-iac/runtime.env`; get it with `tailscale ip -4`). Never publish on `0.0.0.0`, because Docker-published ports bypass UFW.
@@ -35,16 +35,14 @@ no wiki notes or Butler application code.
 ```text
 docker-compose.yml             root project (butler-iac); include:s manifests/*/compose.yml
 manifests/<svc>/compose.yml    one compose file per service
-systemd/                       hermes-dashboard@.service template (EnvironmentFile = ~/.config/butler-iac/runtime.env)
+systemd/                       timers/services: backup, gitops-pull-apply, butler-review-queue
 ansible/                       inventory.yml stores environment vars; playbooks/init.yml initializes host; playbooks/services.yml deploys core services and Butler; backup.yml/restore.yml own migration
 scripts/butler.sh              scoped Butler Compose restart/down/status/logs; reads `BUTLER_DIR`/`WIKI_DIR` from `stack.env`
-scripts/deploy.sh [user]       link unit + switch dashboard user
-scripts/menu.sh                whiptail ops panel (status, dashboard controls, hermes sudo)
 scripts/hermes-sudo.sh         sudo ./scripts/hermes-sudo.sh on|off|status
 scripts/dotenv-env.sh          render|status for ~/.config/butler-iac/runtime.env
 ```
 
-Not tracked (see `.gitignore`): `.env.keys` (dotenvx private key material, never generated here—lives root-only on the VPS), `.dashboard-user`, `data/` (9router DB), `.archive/`. `.env` itself IS tracked, dotenvx-encrypted.
+Not tracked (see `.gitignore`): `.env.keys` (dotenvx private key material, never generated here—lives root-only on the VPS), `data/` (9router DB), `.archive/`. `.env` itself IS tracked, dotenvx-encrypted.
 
 VPS migration (backup old VPS -> `init.yml` on new VPS -> `services.yml` -> restore): see README.md "Migration (existing VPS)".
 
@@ -83,4 +81,4 @@ Butler role writes `BUTLER_DIR` and `WIKI_DIR` (absolute, from inventory) into `
 - Base-host initialization (packages, Docker, Tailscale, shell, firewall, Hermes user/agent, dotenvx) lives in `ansible/playbooks/init.yml`; core services and Butler deployment live in `ansible/playbooks/services.yml`. Don't reintroduce parallel Bash setup for steps either playbook covers.
 - Keep scripts short and use Bash and core utilities only. Mark deliberate shortcuts with a `# ponytail:` comment that names the limit.
 - If `docker` shows "unknown" or permission denied right after `usermod -aG docker`, the session has stale groups, often from a shared SSH ControlMaster connection. Run `exec sudo -iu ubuntu` rather than reconnecting.
-- The following restart live services, so ask administrator before running them: `deploy.sh`, `systemctl restart`, `scripts/butler.sh restart`, `scripts/butler.sh down`, or `ansible-playbook playbooks/services.yml --tags butler-deploy`.
+- The following restart live services, so ask administrator before running them: `systemctl restart`, `scripts/butler.sh restart`, `scripts/butler.sh down`, or `ansible-playbook playbooks/services.yml --tags butler-deploy`.

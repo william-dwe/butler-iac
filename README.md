@@ -80,8 +80,6 @@ systemctl enable --now butler-review-queue.timer
 
 | Script | Purpose |
 |---|---|
-| `scripts/deploy.sh [user]` | Legacy bare-metal systemd install of Hermes. Refuses to run while the `hermes-dashboard` container exists; not part of the Docker setup. |
-| `scripts/menu.sh` | Whiptail control panel for status, dashboard controls, and Hermes sudo. |
 | `scripts/hermes-sudo.sh on\|off\|status` | Manage Hermes passwordless sudo grant. |
 | `scripts/butler.sh restart\|down\|status\|logs` | Scoped Butler Compose control. Deploy through `ansible-playbook playbooks/services.yml --tags butler-deploy`. |
 | `scripts/dotenv-env.sh render\|status` | Decrypt committed `.env` into `~/.config/butler-iac/runtime.env`, or report setup status without values. |
@@ -126,7 +124,7 @@ dotenvx decrypt -f .env -fk ~/.config/butler-iac/dotenvx.keys --stdout
 
 A daily encrypted [restic](https://restic.net) backup of agent state runs from `backup.timer` (03:30, role `backup`, `scripts/backup.sh`, root). It covers `/home/agentops/{.hermes,.paseo,.omp,.pi,workspace,data,services}` minus regenerable bulk (`hermes-agent`, caches, logs, `node_modules`, Paseo models). Live SQLite DBs are snapshotted with the online-backup API first. Control-plane secrets are not included: they re-render from the committed `.env` plus the dotenvx key in Ansible Vault. Retention: 7 daily, 4 weekly, 6 monthly; weekly prune and a 2% integrity check.
 
-- **Repository:** `/home/ubuntu/backups/restic` (local, same disk: protects against mistakes, NOT disk loss). Password: `~/.config/butler-iac/backup.pass` (root 0600, generated once). **Copy that password to a password manager**; without it the backups are unreadable.
+- **Repository:** `/home/ubuntu/backups/restic` (local, same disk: protects against mistakes, NOT disk loss). Password: `~/.config/butler-iac/backup.pass` (root 0600). It is installed from Ansible Vault (`vault_backup_password` in `ansible/group_vars/all/vault.yml`, like the dotenvx key) so backups stay readable if the host is lost; if that variable is undefined the role generates a password once on the host and reminds you to add it to the vault. Add it with `cd ansible && ansible-vault edit group_vars/all/vault.yml` (new line `vault_backup_password: "<contents of backup.pass>"`), then re-run `--tags backup`.
 - **Off-box (recommended):** create `~/.config/butler-iac/backup.env` (root 0600) with `RESTIC_REPOSITORY` and that backend's credentials, for example `RESTIC_REPOSITORY=sftp:user@host:/backups/agent` or `s3:s3.amazonaws.com/bucket/agent` plus `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`. Keep the same password file. `restic init` runs automatically on first use.
 - **Run now / status:** `sudo systemctl start backup.service`; `journalctl -u backup.service`; `sudo restic -r /home/ubuntu/backups/restic -p ~/.config/butler-iac/backup.pass snapshots`.
 - **Restore** (stop the affected containers first, restore into a scratch dir, then copy back):
