@@ -2,7 +2,7 @@
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/.." && pwd)
-env=/etc/butler-iac/butler.env
+env=/etc/butler-iac/stack.env
 mapfile -d '' -t paths < <("$root/scripts/butler-paths.sh")
 [ "${#paths[@]}" -eq 2 ] || { echo "Invalid Butler path configuration." >&2; exit 1; }
 butler=${paths[0]}
@@ -18,11 +18,11 @@ case $1 in restart|down|status|logs) ;; *) usage ;; esac
 sudo test -d "$butler/.git" && sudo test -d "$wiki/.git" || { echo "Missing configured Butler or wiki checkout." >&2; exit 1; }
 sudo test -f "$env" && ! sudo test -L "$env" || { echo "Missing environment file: $env" >&2; exit 1; }
 
-compose=(sudo docker compose --project-directory "$root/manifests/butler" -f "$root/manifests/butler/compose.yml" --env-file "$env")
+compose=(sudo docker compose --project-directory "$root" -f "$root/docker-compose.yml" --env-file "$env" -p butler-iac)
 
 case $1 in
-  restart) "${compose[@]}" restart ;;
-  down) "${compose[@]}" down ;;
-  status) "${compose[@]}" ps ;;
-  logs) "${compose[@]}" logs ;;
+  restart) "${compose[@]}" restart backend frontend ;;
+  down) "${compose[@]}" rm -sf backend frontend ;;
+  status) "${compose[@]}" ps backend frontend ;;
+  logs) "${compose[@]}" logs backend frontend ;;
 esac

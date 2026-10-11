@@ -1,8 +1,0 @@
-- name: Validate Hermes Compose configuration
-  ansible.builtin.command: docker compose -f {{ role_path }}/files/compose.yml --env-file {{ runtime_env }} config --quiet
-  changed_when: false
-
-- name: Start Hermes
-  ansible.builtin.command: docker compose -f {{ role_path }}/files/compose.yml --env-file {{ runtime_env }} up -d --wait --wait-timeout 120
-  changed_when: false
-  # ponytail: Compose up is idempotent; changed status not parsed.

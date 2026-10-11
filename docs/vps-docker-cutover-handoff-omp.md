@@ -19,12 +19,12 @@ cover and should be read alongside it, not instead of it.
 William's explicit requirement: **retain every config, conversation, memory —
 everything.** This is largely already satisfied by design, not something you
 need to build:
-- `ansible/roles/hermes/files/compose.yml` bind-mounts the REAL
+- `manifests/hermes/compose.yml` bind-mounts the REAL
   `/home/hermes/.hermes` directory straight into the container at `/opt/data`
   (not a copy). `state.db` (all sessions/conversations), `config.yaml`, skills,
   memory — all of it is the same files the bare-metal process uses today. The
   container reads/writes the identical data.
-- `ansible/roles/paseo/files/compose.yml` likewise bind-mounts the real
+- `manifests/paseo/compose.yml` likewise bind-mounts the real
   `/home/hermes/.paseo` and `/home/hermes/.hermes`.
 - **Your job is to NOT break this property.** Do not copy, truncate, or
   reinitialize any of `~/.hermes` or `~/.paseo` content. Do not run any
@@ -37,7 +37,7 @@ need to build:
   proceeding past it.
 
 ## Precondition found and NOT yet fixed — fix this FIRST
-`ansible/roles/hermes/files/compose.yml` requires `API_SERVER_KEY` to be set:
+`manifests/hermes/compose.yml` requires `API_SERVER_KEY` to be set:
 ```
 API_SERVER_KEY=${API_SERVER_KEY:?set API_SERVER_KEY in .env}
 ```

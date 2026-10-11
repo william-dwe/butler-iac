@@ -75,7 +75,7 @@ documented rollback (stops services, extracts archive, restarts services).
    intact (same recent conversation history visible).
 
 7. **If anything's wrong:** stop the new containers (`docker compose -f
-   ansible/roles/hermes/files/compose.yml down`, same for paseo), re-enable +
+   manifests/hermes/compose.yml down`, same for paseo), re-enable +
    restart the old systemd units, and consider `restore.yml` if state got corrupted.
 
 8. **If everything's good:** leave the old systemd units disabled (don't delete

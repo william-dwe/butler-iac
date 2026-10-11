@@ -1,4 +1,4 @@
-# Own default network; gateway additionally joins butler_default (Butler API + librarian runs). Nothing shared with core/paseo.
+# Gateway joins the project default network (butler_default, named in manifests/butler) to reach the Butler API for librarian runs.
 name: hermes
 x-hermes: &hermes
   image: nousresearch/hermes-agent@sha256:9774f4f39a9bb8c2f68ce728ed5e99ddbad282163be56764afacf88ed952b784 # :latest manifest list, resolved 2026-10-10
@@ -26,13 +26,15 @@ services:
       retries: 3
       start_period: 60s
     # 8642 stays unpublished: API key only protects it if not exposed.
-    networks: [default, butler]
+    networks: [default]
     volumes:
       - /home/hermes/.hermes:/opt/data
       # Butler wiki + task DB for scripts/butler-review-queue.sh (librarian runs inside this container).
       - /var/lib/butler:/var/lib/butler
       # Researcher output path referenced by wiki SCHEMA.md (raw/briefings/).
       - /home/hermes/workspace/research:/home/hermes/workspace/research
+      # Dedicated workspace: persistent clones of working repos (e.g. butler-backend).
+      - /home/hermes/workspace/repos:/home/hermes/workspace/repos
   dashboard:
     <<: *hermes
     container_name: hermes-dashboard
@@ -41,7 +43,3 @@ services:
       # Tailscale IP only; Docker-published ports bypass UFW.
       - "${TAILSCALE_IP:?set TAILSCALE_IP}:9119:9119"
 
-networks:
-  butler:
-    name: butler_default
-    external: true

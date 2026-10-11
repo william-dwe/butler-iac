@@ -35,7 +35,7 @@ services:
       - no-new-privileges:true
     networks:
       - default
-      - butler-iac_app-network
+      - app-network
 
   frontend:
     image: ghcr.io/william-dwe/butler-frontend@sha256:9c7f60c2361b8676bc17975757b84bbb6418eac79a2850c18ddb6bf8468ff232
@@ -49,5 +49,7 @@ services:
       - 127.0.0.1:3100:3100
 
 networks:
-  butler-iac_app-network:
-    external: true
+  # Shared with hermes-gateway (scripts/butler-review-queue.sh curls backend:8765). Name kept from the old standalone project.
+  default:
+    name: butler_default
+  app-network: {}

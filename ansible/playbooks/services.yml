@@ -2,18 +2,14 @@
   hosts: all
   become: true
   roles:
-    - role: headroom
-      tags: [headroom]
-    - role: 9router
-      tags: [9router]
+    # Whole stack (9router, headroom, hermes, paseo, butler, monitoring): root docker-compose.yml,
+    # applied by gitops-pull-apply (needs /etc/butler-iac/stack.env from the butler role).
     - role: butler
       tags: [butler-deploy]
       when: "'butler-deploy' in ansible_run_tags"
-    # node-exporter, cadvisor, prometheus, grafana: applied by gitops-pull-apply (manifests/).
+    # Host setup only (user, config seed); containers come from the root compose.
     # Cutover-only: the bare-systemd units on :9119/:6767 must be stopped first.
-    # These never run implicitly; invoke explicitly with --tags hermes or --tags paseo.
     - role: hermes
-      hermes_compose: true
       tags: [hermes, never]
     - role: paseo
       tags: [paseo, never]

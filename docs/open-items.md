@@ -8,8 +8,8 @@ Why: the account owns Hermes, Paseo and (since 2026-10-11) a copy of omp state, 
 Would break if renamed without fixing (host uid/gid 1003, home `/home/hermes`):
 - Ansible: `agent_user: hermes` in `ansible/inventory.yml` (46 references to `agent_user`), plus literal `/home/hermes`
   in `roles/hermes`, `roles/paseo`, `roles/butler`, `playbooks/backup.yml`; `roles/hermes/tasks/user.yml` creates the user.
-- Compose: `roles/hermes/files/compose.yml` (`/home/hermes/.hermes`, `/home/hermes/workspace/research`, `HERMES_UID/GID=1003`)
-  and `roles/paseo/files/compose.yml` (`user: 1003:1003`, `/home/hermes/.{paseo,omp,pi,hermes}`).
+- Compose: `manifests/hermes/compose.yml` (`/home/hermes/.hermes`, `/home/hermes/workspace/research`, `HERMES_UID/GID=1003`)
+  and `manifests/paseo/compose.yml` (`user: 1003:1003`, `/home/hermes/.{paseo,omp,pi,hermes}`).
 - Live state outside the repo: `/home/hermes/**` (`.hermes` 13 GB, `.paseo`, `.omp`, `.pi`, `.ssh`, `workspace`), sudoers
   `/etc/sudoers.d/90-hermes-agent` (temporary), `hermes-sudo-expire` timer, `/var/lib/butler` owned by hermes with `hermes` ACL entries.
 - Absolute paths baked into data: Paseo `~/.paseo/config.json` (`/home/hermes/.hermes/hermes-agent/...`), Hermes configs

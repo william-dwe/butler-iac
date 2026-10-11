@@ -35,11 +35,3 @@
     force: false
     # ponytail: seed only; live config.json has hand-edited profiles/plugins. Edit listen manually if Tailscale IP changes.
 
-- name: Validate Paseo Compose configuration
-  ansible.builtin.command: docker compose -f {{ role_path }}/files/compose.yml --env-file {{ runtime_env }} config --quiet
-  changed_when: false
-
-- name: Start Paseo
-  ansible.builtin.command: docker compose -f {{ role_path }}/files/compose.yml --env-file {{ runtime_env }} up -d --wait --wait-timeout 120
-  changed_when: false
-  # ponytail: config.json change does not restart a running container; run `docker compose restart` manually.

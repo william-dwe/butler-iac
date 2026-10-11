@@ -21,26 +21,26 @@ no wiki notes or Butler application code.
 |Component|Defined in|Runs as|Reach it at|
 |---|---|---|---|
 |Hermes dashboard (web + TUI)|`systemd/hermes-dashboard@.service`|`hermes-dashboard@<user>` (`hermes` or `ubuntu`, stored in `.dashboard-user`)|`http://<tailscale-ip>:9119`|
-|Butler dashboard + API|`manifests/butler/compose.yml` project `butler`|containers; backend joins core network only for 9router|Tailscale HTTPS `:8444` -> host loopback `:3100` -> `127.0.0.1:8765`|
-|9router (LLM router)|`docker-compose.yml`|container `9router`|`http://<tailscale-ip>:20128`|
-|Headroom (prompt compression)|`docker-compose.yml`|container `headroom`|`http://headroom:8787`, Docker network only|
+|Butler dashboard + API|`manifests/butler/compose.yml` project `butler-iac`|containers; shared default network `butler_default`|Tailscale HTTPS `:8444` -> host loopback `:3100` -> `127.0.0.1:8765`|
+|9router (LLM router)|`manifests/9router/compose.yml`|container `9router`|`http://<tailscale-ip>:20128`|
+|Headroom (prompt compression)|`manifests/headroom/compose.yml`|container `headroom`|`http://headroom:8787`, Docker network only|
 
 - Only one user can run the dashboard, because only one process can listen on `:9119`. `scripts/deploy.sh <user>` links the unit, stops the others, and restarts the dashboard, which drops open browser and agent sessions.
-- 9router calls Headroom's `/v1/compress` without a token. For that reason Headroom must not publish a host port or a Tailscale Serve rule. `scripts/check-headroom.sh` checks this.
+- 9router calls Headroom's `/v1/compress` without a token. For that reason Headroom must not publish a host port or a Tailscale Serve rule. Verify with `docker port headroom` (must be empty) and `tailscale serve status`.
 - The network is locked down by UFW (role `common`, `tasks/firewall.yml`): incoming traffic is denied by default, except `tailscale0` and port 22. The dashboard runs with `--insecure` on `0.0.0.0` and depends on this firewall.
 - 9router is published only on the Tailscale IP (`TAILSCALE_IP` rendered into `/etc/personal-agent-infra.env`; get it with `tailscale ip -4`). Never publish on `0.0.0.0`, because Docker-published ports bypass UFW.
 
 ## Layout
 
 ```text
-docker-compose.yml             9router + headroom core project
+docker-compose.yml             root project (butler-iac); include:s manifests/*/compose.yml
+manifests/<svc>/compose.yml    one compose file per service
 systemd/                       hermes-dashboard@.service template (EnvironmentFile = /etc/personal-agent-infra.env)
 ansible/                       inventory.yml stores environment vars; playbooks/init.yml initializes host; playbooks/services.yml deploys core services and Butler; backup.yml/restore.yml own migration
 scripts/butler.sh              scoped Butler Compose restart/down/status/logs; reads `/etc/personal-agent-infra.paths`
 scripts/deploy.sh [user]       link unit + switch dashboard user
 scripts/menu.sh                whiptail ops panel (status, dashboard controls, hermes sudo)
 scripts/hermes-sudo.sh         sudo ./scripts/hermes-sudo.sh on|off|status
-scripts/check-headroom.sh      read-only smoke test for 9router -> headroom
 scripts/dotenv-env.sh          render|status for /etc/personal-agent-infra.env
 ```
 

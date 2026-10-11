@@ -11,3 +11,4 @@ services:
       - ./provisioning/datasources:/etc/grafana/provisioning/datasources:ro
 volumes:
   grafana_data:
+    name: grafana_grafana_data # pre-include live volume

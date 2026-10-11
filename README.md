@@ -10,10 +10,10 @@ Interactive version with summary cards: [docs/architecture.html](docs/architectu
 
 | Component | Runs as / network | Reach it at |
 |---|---|---|
-| Hermes gateway + dashboard | Docker containers `hermes-gateway`, `hermes-dashboard` (Compose, `ansible/roles/hermes`) | `http://<tailscale-ip>:9119` |
-| 9router | Docker container; published host port | `http://<tailscale-ip>:20128` |
-| Headroom | Docker `app-network` only | `http://headroom:8787` |
-| Butler dashboard + API | Compose project `butler` from `manifests/butler/compose.yml` (GHCR digests, applied by `gitops-pull-apply`); backend joins core Docker network only for 9router | Tailscale HTTPS `:8444` -> host loopback `:3100` |
+| Hermes gateway + dashboard | Docker containers `hermes-gateway`, `hermes-dashboard` (`manifests/hermes/compose.yml`) | `http://<tailscale-ip>:9119` |
+| 9router | Docker container (`manifests/9router/compose.yml`); published host port | `http://<tailscale-ip>:20128` |
+| Headroom | `manifests/headroom/compose.yml`; Docker `app-network` only | `http://headroom:8787` |
+| Butler dashboard + API | `manifests/butler/compose.yml` (GHCR digests); backend joins `app-network` for 9router | Tailscale HTTPS `:8444` -> host loopback `:3100` |
 
 ## Quick start (new VPS)
 
@@ -58,9 +58,9 @@ ansible-playbook -i '<host>,' -u ubuntu playbooks/services.yml
 ansible-playbook -i '<host>,' -u ubuntu playbooks/services.yml --tags butler-deploy
 ```
 
-Add `-K` when sudo needs password. `init.yml` pauses for interactive Tailscale login. `services.yml` starts Headroom and 9router; `--tags butler-deploy` explicitly clones, updates, builds, and restarts Butler. Use `--tags <name>` to run another area.
+Add `-K` when sudo needs password. `init.yml` pauses for interactive Tailscale login. `services.yml` prepares hosts for Hermes/Paseo and renders `/etc/butler-iac/stack.env`; containers (including 9router and Headroom) are started by the `gitops-pull-apply` timer from the root `docker-compose.yml`. `--tags butler-deploy` renders `stack.env` and extracts the Butler CLI. Use `--tags <name>` to run another area.
 
-`ansible/inventory.yml` holds environment-specific non-secret values (`admin_user`, `agent_user`, dashboard user, checkout path, repo URL, runtime env path). It also defines `butler_repo_url`, `butler_dir`, `butler_deploy_ref`, `wiki_repo_url`, and `wiki_dir`. Override them in another inventory for a different VPS. `init.yml` orders host prerequisites: `common`, `tailscale`, `hermes`, `devtools`, then `dotenvx`. `services.yml` starts Headroom and 9router. `services.yml --tags butler-deploy` deploys Butler at `butler_deploy_ref`. `main` deploys latest upstream `main`; use a tag or commit for repeatable deployment. `backup.yml` and `restore.yml` own migration orchestration.
+`ansible/inventory.yml` holds environment-specific non-secret values (`admin_user`, `agent_user`, dashboard user, checkout path, repo URL, runtime env path). It also defines `butler_repo_url`, `butler_dir`, `butler_deploy_ref`, `wiki_repo_url`, and `wiki_dir`. Override them in another inventory for a different VPS. `init.yml` orders host prerequisites: `common`, `tailscale`, `hermes`, `devtools`, then `dotenvx`. `services.yml --tags butler-deploy` renders `stack.env` and extracts the Butler CLI for Butler at `butler_deploy_ref`. `main` deploys latest upstream `main`; use a tag or commit for repeatable deployment. `backup.yml` and `restore.yml` own migration orchestration.
 `init.yml` installs `omp` at `/home/<admin_user>/.local/bin/omp` and links it at `/usr/local/bin/omp`.
 
 
@@ -82,7 +82,6 @@ systemctl enable --now butler-review-queue.timer
 |---|---|
 | `scripts/deploy.sh [user]` | Legacy bare-metal systemd install of Hermes. Refuses to run while the `hermes-dashboard` container exists; not part of the Docker setup. |
 | `scripts/menu.sh` | Whiptail control panel for status, dashboard controls, and Hermes sudo. |
-| `scripts/check-headroom.sh` | Read-only 9router-to-Headroom smoke test. |
 | `scripts/hermes-sudo.sh on\|off\|status` | Manage Hermes passwordless sudo grant. |
 | `scripts/butler.sh restart\|down\|status\|logs` | Scoped Butler Compose control. Deploy through `ansible-playbook playbooks/services.yml --tags butler-deploy`. |
 | `scripts/dotenv-env.sh render\|status` | Decrypt committed `.env` into `/etc/personal-agent-infra.env`, or report setup status without values. |
@@ -103,7 +102,7 @@ ansible-playbook playbooks/restore.yml -e backup_file=backups/<name>.tar.zst
 
 `.env` at repo root IS committed to this public repo, and that is intentional: it holds [dotenvx](https://dotenvx.com)-encrypted values (`KEY=encrypted:...`), not plaintext. The only secret-bearing runtime file is private key `/etc/dotenvx/personal-agent-infra.env.keys`, root-owned mode `0600`, generated once on VPS; its only copy outside VPS is Ansible Vault ciphertext `ansible/group_vars/all/vault.yml`, decryptable only with git-ignored one-line `ansible/secret.txt`. The `dotenvx` Ansible role installs the dotenvx CLI and a global (machine-level) git clean filter (`dotenvx protect`) that blocks committing plaintext `.env*` on this machine as a safety net.
 
-`scripts/dotenv-env.sh render` (root only) decrypts `.env` using the private key, drops stale `TAILSCALE_IP`/`BUTLER_ORIGIN`/`BUTLER_WEB_ORIGIN` lines, injects current host-derived values for those three, and atomically installs root-owned `/etc/personal-agent-infra.env` mode `0600`. It never prints secret values. The `dotenvx`, `headroom`, and `butler` Ansible roles call it automatically. `scripts/dotenv-env.sh status` reports CLI/key/render state without values.
+`scripts/dotenv-env.sh render` (root only) decrypts `.env` using the private key, drops stale `TAILSCALE_IP`/`BUTLER_ORIGIN`/`BUTLER_WEB_ORIGIN` lines, injects current host-derived values for those three, and atomically installs root-owned `/etc/personal-agent-infra.env` mode `0600`. It never prints secret values. The `dotenvx` and `butler` Ansible roles call it automatically. `scripts/dotenv-env.sh status` reports CLI/key/render state without values.
 
 ### Restore key from old VPS
 
@@ -128,21 +127,23 @@ dotenvx decrypt -f .env -fk /etc/dotenvx/personal-agent-infra.env.keys --stdout
 - UFW denies incoming traffic by default; it allows `tailscale0` and TCP `22`.
 - Dashboard uses `--insecure` on `0.0.0.0`; safety relies on UFW.
 - 9router is published only on `TAILSCALE_IP`; Docker-published ports bypass UFW, so never bind `0.0.0.0`.
-- Headroom must not publish host port or Tailscale Serve rule; 9router calls `/v1/compress` without token.
+- Headroom must not publish host port or Tailscale Serve rule; 9router calls `/v1/compress` without token. Verify with `docker port headroom` (must be empty) and `tailscale serve status`.
 - `scripts/hermes-sudo.sh` grant and `docker` group membership are root-equivalent.
-- Butler runs only through `manifests/butler/compose.yml`; host ports remain loopback. Backend joins `butler-iac_app-network` only for 9router; frontend stays private.
+- Butler host ports remain loopback. Backend joins `app-network` for 9router; frontend stays private.
 - `/var/lib/butler` is shared through named ACLs by `hermes` and `ubuntu`. Butler container runs as root only for portable bind-mount ownership; do not add `hermes` to Docker group.
 
 ## GitOps manifests
 
 Image digests for auto-deployed services live in `manifests/` in this same repo. A systemd
 timer (`gitops-pull-apply`, running as `ubuntu`, who owns the docker group) runs
-`git pull --ff-only` on this checkout, then `docker compose pull && up -d` for each
+`git pull --ff-only` on this checkout, then `docker compose --env-file /etc/butler-iac/stack.env
+-f docker-compose.yml pull` and `up -d --remove-orphans` on the root file, which `include:`s every
 `manifests/<service>/compose.yml`. Only the repo owner commits manifest changes; nothing
 else gets docker-group access.
 
 ### Layout
-- `manifests/<service>/compose.yml` -- one file per auto-deployed service.
+- `docker-compose.yml` -- root file (project `butler-iac`); only `include:`s manifests.
+- `manifests/<service>/compose.yml` -- one file per service.
 - Image references use `@sha256:...` digests, never `:latest` tags, so a bump is a
   real, auditable file diff.
 
@@ -151,8 +152,7 @@ Only butler-backend and butler-frontend are pulled from William's private GHCR (
 other image here is a public upstream vendor image (nousresearch/hermes-agent,
 ghcr.io/getpaseo/paseo, prom/*, grafana/grafana, gcr.io/cadvisor/cadvisor).
 
-Services applied by the timer: butler, node-exporter, cadvisor, prometheus, grafana. A service
-needing secrets reads `/etc/butler-iac/<svc>.env` (`root:ubuntu 0640`; the `butler` role renders `butler.env`).
-
-9router and headroom are intentionally NOT managed here -- pinned manually, out of
-scope for GitOps auto-deploy per project decision.
+Services applied by the timer: butler, hermes, paseo, 9router, headroom, node-exporter, cadvisor,
+prometheus, grafana. Secrets come from `/etc/butler-iac/stack.env` (`root:ubuntu 0640`), rendered by
+the `butler` role; the timer fails if it is missing. All services share the project default network
+`butler_default`. One failing service fails `config` for the whole stack.

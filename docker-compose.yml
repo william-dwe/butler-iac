@@ -1,44 +1,15 @@
+# Whole stack. Each service lives in manifests/<svc>/compose.yml; this file only includes them.
+# `name:` in included files is ignored: every container belongs to project butler-iac.
+# Needs --env-file /etc/butler-iac/stack.env (rendered by the butler Ansible role).
 name: butler-iac
 
-networks:
-  app-network:
-    driver: bridge
-
-services:
-  9router:
-    image: decolua/9router:latest
-    container_name: 9router
-    restart: unless-stopped
-    ports:
-      # Bound to Tailscale IP because Docker-published ports bypass UFW; ponytail: container fails to start if tailscale0 is down.
-      - "${TAILSCALE_IP:?set TAILSCALE_IP in .env}:20128:20128"
-    environment:
-      - DATA_DIR=/app/data
-      - INITIAL_PASSWORD=${NINEROUTER_INITIAL_PASSWORD}
-      - JWT_SECRET=${NINEROUTER_JWT_SECRET}
-      - HEADROOM_URL=http://headroom:8787
-    volumes:
-      - ./data/9router:/app/data
-    networks:
-      - app-network
-
-  # 9router calls /v1/compress, then routes to providers itself.
-  # No host port or Tailscale Serve rule: 9router cannot send a proxy token.
-  # Reachable only on the Docker network (and from the Docker host).
-  headroom:
-    image: ghcr.io/headroomlabs-ai/headroom:0.38.0
-    container_name: headroom
-    restart: unless-stopped
-    environment:
-      # /v1/compress is loopback-only by default; permit the sibling container.
-      - HEADROOM_COMPRESS_ALLOW_REMOTE=1
-      - HOME=/home/nonroot
-      - HEADROOM_WORKSPACE_DIR=/home/nonroot/.headroom
-      - HEADROOM_CONFIG_DIR=/home/nonroot/.headroom/config
-    volumes:
-      - headroom_workspace:/home/nonroot/.headroom
-    networks:
-      - app-network
-
-volumes:
-  headroom_workspace:
+include:
+  - manifests/9router/compose.yml
+  - manifests/headroom/compose.yml
+  - manifests/hermes/compose.yml
+  - manifests/paseo/compose.yml
+  - manifests/butler/compose.yml
+  - manifests/node-exporter/compose.yml
+  - manifests/cadvisor/compose.yml
+  - manifests/prometheus/compose.yml
+  - manifests/grafana/compose.yml

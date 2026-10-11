@@ -1,0 +1,23 @@
+name: 9router # ignored when included from the root docker-compose.yml (project is butler-iac)
+
+services:
+  9router:
+    image: decolua/9router@sha256:4316fefb95ea642d57db885d906b1227b1768b15ac5def314621fd781da7b3f1 # :latest resolved 2026-10-11
+    container_name: 9router
+    restart: unless-stopped
+    ports:
+      # Bound to Tailscale IP because Docker-published ports bypass UFW; ponytail: container fails to start if tailscale0 is down.
+      - "${TAILSCALE_IP:?set TAILSCALE_IP in .env}:20128:20128"
+    environment:
+      - DATA_DIR=/app/data
+      - INITIAL_PASSWORD=${NINEROUTER_INITIAL_PASSWORD}
+      - JWT_SECRET=${NINEROUTER_JWT_SECRET}
+      - HEADROOM_URL=http://headroom:8787
+    volumes:
+      # Relative to this file: keeps state at <repo>/data/9router (gitignored).
+      - ../../data/9router:/app/data
+    networks:
+      - app-network
+
+networks:
+  app-network: {}

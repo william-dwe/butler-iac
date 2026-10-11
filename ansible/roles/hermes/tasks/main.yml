@@ -1,6 +1,2 @@
 - name: Configure Hermes user
   ansible.builtin.import_tasks: user.yml
-
-- name: Run Hermes Compose project
-  ansible.builtin.import_tasks: compose.yml
-  when: hermes_compose | default(false)

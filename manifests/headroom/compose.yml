@@ -1,0 +1,26 @@
+name: headroom # ignored when included from the root docker-compose.yml (project is butler-iac)
+
+services:
+  # 9router calls /v1/compress, then routes to providers itself.
+  # No host port or Tailscale Serve rule: 9router cannot send a proxy token.
+  # Reachable only on the Docker network (and from the Docker host).
+  headroom:
+    image: ghcr.io/headroomlabs-ai/headroom@sha256:14e3dda1f041eef509af850ac7a32647d1c3e5d9bd66e3e8655dfd3a398273af # 0.38.0
+    container_name: headroom
+    restart: unless-stopped
+    environment:
+      # /v1/compress is loopback-only by default; permit the sibling container.
+      - HEADROOM_COMPRESS_ALLOW_REMOTE=1
+      - HOME=/home/nonroot
+      - HEADROOM_WORKSPACE_DIR=/home/nonroot/.headroom
+      - HEADROOM_CONFIG_DIR=/home/nonroot/.headroom/config
+    volumes:
+      - headroom_workspace:/home/nonroot/.headroom
+    networks:
+      - app-network
+
+networks:
+  app-network: {}
+
+volumes:
+  headroom_workspace:
