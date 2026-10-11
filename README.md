@@ -149,7 +149,7 @@ else gets docker-group access.
   real, auditable file diff.
 
 ### Scope
-Only butler-backend and butler-frontend are pulled from William's private GHCR (`docker login ghcr.io` as `ubuntu`, `read:packages`); every
+Only butler-backend and butler-frontend are pulled from William's private GHCR (the `butler` role runs `docker login ghcr.io` as `ubuntu` from `GHCR_USERNAME` + `GHCR_PULL_TOKEN` in the encrypted `.env`: a classic PAT with only `read:packages`); every
 other image here is a public upstream vendor image (nousresearch/hermes-agent,
 ghcr.io/getpaseo/paseo, prom/*, grafana/grafana, gcr.io/cadvisor/cadvisor).
 

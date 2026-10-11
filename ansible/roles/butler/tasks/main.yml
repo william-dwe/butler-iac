@@ -218,6 +218,34 @@
   changed_when: false
   tags: [butler-deploy]
 
+# GHCR_USERNAME + GHCR_PULL_TOKEN (classic PAT, read:packages only) come from the encrypted .env.
+# Missing keys skip the login so an existing manual login keeps working. Token never leaves stdin.
+- name: Log admin_user in to GHCR
+  ansible.builtin.shell:
+    cmd: |
+      set -euo pipefail
+      env_file={{ butler_runtime_env | quote }}
+      user=$(sed -n 's/^GHCR_USERNAME=//p' "$env_file")
+      token=$(sed -n 's/^GHCR_PULL_TOKEN=//p' "$env_file")
+      if [ -z "$user" ] || [ -z "$token" ]; then echo SKIPPED; exit 0; fi
+      printf '%s' "$token" | runuser -u {{ admin_user | quote }} -- \
+        env DOCKER_CONFIG=/home/{{ admin_user }}/.docker docker login ghcr.io -u "$user" --password-stdin >/dev/null
+      echo LOGGED_IN
+    executable: /bin/bash
+  register: butler_ghcr_login
+  changed_when: "'LOGGED_IN' in butler_ghcr_login.stdout"
+  no_log: true
+  when: not ansible_check_mode
+  tags: [butler-deploy]
+
+- name: Warn when GHCR credentials are absent from the runtime environment
+  ansible.builtin.debug:
+    msg: >-
+      GHCR_USERNAME/GHCR_PULL_TOKEN not set in the encrypted .env; keeping the existing
+      docker login for {{ admin_user }}. Add them with dotenvx set (see README Secrets).
+  when: not ansible_check_mode and 'SKIPPED' in butler_ghcr_login.stdout
+  tags: [butler-deploy]
+
 - name: Export Butler CLI from GHCR backend image
   ansible.builtin.shell:
     cmd: |
