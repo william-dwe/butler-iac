@@ -17,6 +17,14 @@
     group: "{{ agent_user }}"
     mode: "0700"
 
+- name: Create Paseo CLI exposure dir
+  ansible.builtin.file:
+    path: "/home/{{ agent_user }}/.paseo/local-bin"
+    state: directory
+    owner: "{{ agent_user }}"
+    group: "{{ agent_user }}"
+    mode: "0755"
+
 - name: Configure Paseo on Tailscale only
   ansible.builtin.copy:
     dest: "/home/{{ agent_user }}/.paseo/config.json"

@@ -12,6 +12,8 @@ services:
     volumes:
       # Identity/auth files (daemon-keypair.json, server-id, push-tokens.json, local-credential, cli-client-id, config.json).
       - /home/hermes/.paseo:/home/paseo/.paseo
+      # Writable target for Hermes CLI exposure; /home/paseo is uid 1000, container runs 1003. Dir created by Ansible.
+      - /home/hermes/.paseo/local-bin:/home/paseo/.local/bin
       # OMP CLI for paseo-omp provider; Ansible-managed stable install path.
       - /opt/omp:/opt/omp:ro
       - /home/hermes/.hermes:/home/hermes/.hermes
