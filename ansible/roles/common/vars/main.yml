@@ -1,6 +1,7 @@
 common_base_packages:
   - git
   - curl
+  - gh
   - ca-certificates
   - acl
   - zsh
