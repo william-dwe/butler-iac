@@ -13,6 +13,8 @@
       loop:
         - "/opt/omp"
         - "/home/{{ admin_user }}/.omp"
+        - "/home/{{ agent_user }}/.omp"
+        - "/home/{{ agent_user }}/.pi"
       register: omp_state
     - name: Check 9router data directories
       ansible.builtin.stat:
@@ -35,6 +37,8 @@
             home/{{ agent_user }}/.hermes home/{{ agent_user }}/.local/bin
             {{ 'opt/omp' if omp_state.results[0].stat.exists else '' }}
             {{ 'home/' ~ admin_user ~ '/.omp' if omp_state.results[1].stat.exists else '' }}
+            {{ 'home/' ~ agent_user ~ '/.omp' if omp_state.results[2].stat.exists else '' }}
+            {{ 'home/' ~ agent_user ~ '/.pi' if omp_state.results[3].stat.exists else '' }}
       always:
         - name: Resume services
           ansible.builtin.import_tasks: tasks/start_services.yml

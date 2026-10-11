@@ -126,3 +126,12 @@ documented rollback (stops services, extracts archive, restarts services).
   The `/usr/local/lib/personal-agent-infra/butler-review-queue.sh` symlink was repointed from `/srv/agent-infra` to this
   checkout. Paseo<->Hermes/omp integration is intentionally NOT migrated (host-only `hermes`, `paseo-omp` wrappers remain).
   Not covered: SCHEMA.md's `/home/hermes/workspace/research/` and `~/backups/second-brain/` host paths do not exist in the container.
+- Research mount: `hermes-gateway` bind-mounts `/home/hermes/workspace/research` (SCHEMA.md `raw/briefings/` source path).
+- Paseo providers now run inside the container. `omp` state moved to hermes ownership: `/home/hermes/.omp` and
+  `/home/hermes/.pi` (the latter holds `agent/9router.json`, the 9router endpoint+key read by the `@qmahyar/pi-9router`
+  plugin) are mounted at `/home/paseo/.omp` and `/home/paseo/.pi`; `~/.paseo/config.json` `agents.providers.omp.command`
+  is `/opt/omp/bin/omp` and `providers.hermes.command` is `/home/hermes/.hermes/hermes-agent/.hermes/bin/hermes -p orchestrator acp`
+  (depends on that host checkout; backup of the old config: `config.json.pre-omp-move`). Do NOT set `PI_CODING_AGENT_DIR`
+  in the container: omp then fails to load its native addon. The `paseo-omp` sudo wrapper and `/etc/sudoers.d/paseo-omp` are now unused.
+- `/home/ubuntu/.omp` and `/home/ubuntu/.pi` are still the live state of the admin omp session; the hermes copies were taken
+  2026-10-11 and are NOT kept in sync. `backup.yml` archives both.

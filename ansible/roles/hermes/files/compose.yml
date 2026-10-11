@@ -31,6 +31,8 @@ services:
       - /home/hermes/.hermes:/opt/data
       # Butler wiki + task DB for scripts/butler-review-queue.sh (librarian runs inside this container).
       - /var/lib/butler:/var/lib/butler
+      # Researcher output path referenced by wiki SCHEMA.md (raw/briefings/).
+      - /home/hermes/workspace/research:/home/hermes/workspace/research
   dashboard:
     <<: *hermes
     container_name: hermes-dashboard

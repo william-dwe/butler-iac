@@ -15,6 +15,9 @@ services:
       # OMP CLI for paseo-omp provider; Ansible-managed stable install path.
       - /opt/omp:/opt/omp:ro
       - /home/hermes/.hermes:/home/hermes/.hermes
+      # OMP state + 9router provider config; owned by hermes (uid 1003), same as the container user.
+      - /home/hermes/.omp:/home/paseo/.omp
+      - /home/hermes/.pi:/home/paseo/.pi
     environment:
       - HERMES_HOME=/home/hermes/.hermes
     healthcheck:
