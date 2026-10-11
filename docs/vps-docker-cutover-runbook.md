@@ -134,6 +134,6 @@ documented rollback (stops services, extracts archive, restarts services).
   in the container: omp then fails to load its native addon. The `paseo-omp` sudo wrapper and `/etc/sudoers.d/paseo-omp` were removed 2026-10-11; the host wrappers are in `/home/hermes/.local/bin.retired-20261011/`.
 - Never run `hermes` from the checkout with a scratch `HERMES_HOME`: its launcher rewrites itself from `HERMES_HOME` and triggers a source update/build inside the live checkout (this broke the Paseo Hermes provider once).
 - `backup.yml` now also archives `~/.paseo` (minus `models/` and `*.log`) and `~/workspace`. `restore.yml` resolves `backup_file` to an absolute path.
-- GitOps: `common` role now installs `gitops-pull-apply.{service,timer}` (linked from this checkout, runs as `ubuntu`) and clones `butler-iac` to `/srv/deploy-manifests` owned by `ubuntu`. The unused `deploy` group and `agentops` system account are removed from the repo; `agentops` is free as a rename target.
+- GitOps: `common` role now installs `gitops-pull-apply.{service,timer}` (linked from this checkout, runs as `ubuntu`) and pulls this repo (`butler-iac`) via the same checkout, no separate `/srv/deploy-manifests` clone. The unused `deploy` group and `agentops` system account are removed from the repo; `agentops` is free as a rename target.
 - `/home/ubuntu/.omp` and `/home/ubuntu/.pi` are still the live state of the admin omp session; the hermes copies were taken
   2026-10-11 and are NOT kept in sync. `backup.yml` archives both.

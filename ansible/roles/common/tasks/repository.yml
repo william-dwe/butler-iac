@@ -5,23 +5,7 @@
     update: false
   become_user: "{{ admin_user }}"
 
-- name: Create deploy manifests directory
-  ansible.builtin.file:
-    path: "{{ deploy_manifests_dir }}"
-    state: directory
-    owner: "{{ admin_user }}"
-    group: "{{ admin_user }}"
-    mode: "0755"
-
-- name: Clone butler-iac manifest repository
-  ansible.builtin.git:
-    repo: "{{ butler_iac_repo_url }}"
-    dest: "{{ deploy_manifests_dir }}/butler-iac"
-    version: "{{ butler_iac_version }}"
-    update: true
-  become_user: "{{ admin_user }}"
-
-# ubuntu (docker group) pulls and applies; units are linked from this checkout.
+# ubuntu (docker group) pulls this checkout and applies manifests/; units are linked from it.
 - name: Link GitOps pull-apply units
   ansible.builtin.file:
     src: "{{ infra_dir }}/systemd/{{ item }}"
