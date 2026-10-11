@@ -44,6 +44,7 @@
     owner: root
     group: root
     mode: "0600"
+  when: not (ansible_check_mode and backup_pass.changed)
   tags: [backup]
 
 - name: Remind to save the restic password off the host
@@ -70,4 +71,5 @@
     enabled: true
     state: started
     daemon_reload: "{{ backup_units.changed }}"
+  when: not ansible_check_mode
   tags: [backup]

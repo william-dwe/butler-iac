@@ -64,6 +64,10 @@ Butler role writes `BUTLER_DIR` and `WIKI_DIR` (absolute, from inventory) into `
 - Agents may run `scripts/dotenv-env.sh status` only. Agents never run `scripts/dotenv-env.sh render`, `dotenvx decrypt`, `dotenvx encrypt` on committed `.env`, or read `~/.config/butler-iac/dotenvx.keys`. Transferring the dotenvx private key between VPSes is an administrator-only guided console action; agents don't automate or participate in it. Adding a new key via `dotenvx set KEY value -f .env` doesn't need the private key, but still ask the administrator to run it themself—an agent-entered value can't be confirmed without ever appearing in chat.
 - When changing secret keys or `.env.example`, report key names and ask the administrator to update the encrypted `.env` manually; never ask for or print values in chat.
 
+## Backups
+
+`backup.timer` runs `scripts/backup.sh` (root) daily; repo `/home/ubuntu/backups/restic`, password `~/.config/butler-iac/backup.pass`, optional off-box config `backup.env`. Agents may read `systemctl status backup.service` and `restic snapshots` output but never print the password file. See README "Backups".
+
 ## Security-sensitive knobs
 
 - `scripts/hermes-sudo.sh on` writes `/etc/sudoers.d/90-hermes-agent`, which gives `hermes` passwordless root. `off` removes only that file.

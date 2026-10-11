@@ -122,6 +122,22 @@ To inspect decrypted values locally (admin only, never for agents):
 dotenvx decrypt -f .env -fk ~/.config/butler-iac/dotenvx.keys --stdout
 ```
 
+## Backups
+
+A daily encrypted [restic](https://restic.net) backup of agent state runs from `backup.timer` (03:30, role `backup`, `scripts/backup.sh`, root). It covers `/home/agentops/{.hermes,.paseo,.omp,.pi,workspace,data,services}` minus regenerable bulk (`hermes-agent`, caches, logs, `node_modules`, Paseo models). Live SQLite DBs are snapshotted with the online-backup API first. Control-plane secrets are not included: they re-render from the committed `.env` plus the dotenvx key in Ansible Vault. Retention: 7 daily, 4 weekly, 6 monthly; weekly prune and a 2% integrity check.
+
+- **Repository:** `/home/ubuntu/backups/restic` (local, same disk: protects against mistakes, NOT disk loss). Password: `~/.config/butler-iac/backup.pass` (root 0600, generated once). **Copy that password to a password manager**; without it the backups are unreadable.
+- **Off-box (recommended):** create `~/.config/butler-iac/backup.env` (root 0600) with `RESTIC_REPOSITORY` and that backend's credentials, for example `RESTIC_REPOSITORY=sftp:user@host:/backups/agent` or `s3:s3.amazonaws.com/bucket/agent` plus `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`. Keep the same password file. `restic init` runs automatically on first use.
+- **Run now / status:** `sudo systemctl start backup.service`; `journalctl -u backup.service`; `sudo restic -r /home/ubuntu/backups/restic -p ~/.config/butler-iac/backup.pass snapshots`.
+- **Restore** (stop the affected containers first, restore into a scratch dir, then copy back):
+
+```bash
+export RESTIC_REPOSITORY=/home/ubuntu/backups/restic RESTIC_PASSWORD_FILE=$HOME/.config/butler-iac/backup.pass
+sudo -E restic snapshots
+sudo -E restic restore latest --target /var/tmp/restore --include /home/agentops/data
+# SQLite DBs are in the same snapshot under /var/tmp/agent-backup-stage/home/agentops/...; copy those over the live paths.
+```
+
 ## Security
 
 - UFW denies incoming traffic by default; it allows `tailscale0` and TCP `22`.
