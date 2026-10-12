@@ -79,6 +79,9 @@ services:
       - WANTED_UID=1003
       - WANTED_GID=1003
       - HERMES_WEBUI_STATE_DIR=/home/hermeswebui/.hermes/webui
+      # ponytail: workaround for upstream nesquena/hermes-webui#8113 (image venv is py3.12, the agent gates its core deps on py>=3.14).
+      # Drop once the WebUI image creates a 3.14 venv itself. Recreating the container is what rebuilds the venv.
+      - UV_PYTHON=3.14
       - HERMES_WEBUI_PASSWORD=${HERMES_WEBUI_PASSWORD:?set HERMES_WEBUI_PASSWORD in .env}
       # Tasks/cron health probe against the gateway API (8642 stays unpublished).
       - HERMES_API_URL=http://hermes-gateway:8642
