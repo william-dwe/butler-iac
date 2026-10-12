@@ -199,7 +199,7 @@
       set -euo pipefail
       tmp=$(mktemp {{ control_dir | quote }}/.stack.env.XXXXXX)
       trap 'rm -f "$tmp"' EXIT
-      { grep -E '^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY|TAILSCALE_IP|NINEROUTER_[A-Z0-9_]+)=' {{ butler_runtime_env | quote }} || true
+      { grep -E '^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY|HERMES_WEBUI_PASSWORD|TAILSCALE_IP|NINEROUTER_[A-Z0-9_]+)=' {{ butler_runtime_env | quote }} || true
         printf 'WIKI_DIR=%s\nBUTLER_DIR=%s\n' {{ wiki_dir | quote }} {{ butler_dir | quote }}; } > "$tmp"
       chown {{ admin_user }}:{{ admin_user }} "$tmp"
       chmod 0600 "$tmp"
