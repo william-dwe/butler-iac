@@ -39,7 +39,7 @@ if [ "$before_rev" != "$after_rev" ] || [ "$before" != "$after" ] || [ -e "$stat
   summary=$(mktemp)
   {
     [ "$before_rev" = "$after_rev" ] && echo "Repo: $after_rev (unchanged)" || echo "Repo: $before_rev -> $after_rev: $(git -C "$repo" log -1 --format=%s)"
-    changed=$(diff <(echo "$before") <(echo "$after") | sed -n 's/^> \([^ ]*\) [^ ]* \(.*\)$/\1 (\2)/p' | head -15)
+    changed=$(diff <(echo "$before") <(echo "$after") | sed -n 's/^> \([^ ]*\) [^ ]* \(.*\)$/\1 (\2)/p' | head -15 || true)
     [ -z "$changed" ] || printf 'Updated/recreated containers:\n%s\n' "$changed"
     [ ! -e "$state" ] || echo "Recovered from an earlier failure."
   } >"$summary"
