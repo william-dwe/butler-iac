@@ -52,3 +52,47 @@ services:
       # Tailscale IP only; Docker-published ports bypass UFW.
       - "${TAILSCALE_IP:?set TAILSCALE_IP}:9119:9119"
 
+  # hermes-webui (browser/Hermex Android client). Runs the agent in-process, so it needs the agent source of the SAME pinned
+  # digest as the gateway/dashboard (version-coupled upstream). agent-src refreshes the named volume from the pinned image on every `up`.
+  agent-src:
+    <<: *hermes
+    container_name: hermes-agent-src
+    restart: "no"
+    entrypoint: ["sh", "-c", "find /dst -mindepth 1 -delete && cp -a /opt/hermes/. /dst/"]
+    command: []
+    environment: []
+    volumes:
+      - hermes-agent-src:/dst
+  webui:
+    # ghcr.io/nesquena/hermes-webui v0.52.462 (:latest resolved 2026-10-12); repin together with the agent digest above.
+    image: ghcr.io/nesquena/hermes-webui@sha256:9935e8c525249383267d104dccb3f974beaacd243c52862957d3d470b2dc103f
+    container_name: hermes-webui
+    restart: unless-stopped
+    depends_on:
+      agent-src:
+        condition: service_completed_successfully
+    ports:
+      # Loopback only; exposed to the tailnet with `tailscale serve --bg 8787` (HTTPS :443). Docker-published ports bypass UFW.
+      - "127.0.0.1:8787:8787"
+    environment:
+      - WANTED_UID=1003
+      - WANTED_GID=1003
+      - HERMES_WEBUI_PASSWORD=${HERMES_WEBUI_PASSWORD:?set HERMES_WEBUI_PASSWORD in .env}
+      # Tasks/cron health probe against the gateway API (8642 stays unpublished).
+      - HERMES_API_URL=http://hermes-gateway:8642
+      - HERMES_WEBUI_GATEWAY_API_KEY=${API_SERVER_KEY:?set API_SERVER_KEY in .env}
+    volumes:
+      - /home/agentops/.hermes:/home/hermeswebui/.hermes
+      - hermes-agent-src:/home/hermeswebui/.hermes/hermes-agent:ro
+      # ponytail: repos only; wiki (librarian-only writes) and the Butler DB are deliberately not mounted.
+      - /home/agentops/workspace/repos:/workspace
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8787/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks: [default]
+
+volumes:
+  hermes-agent-src:
