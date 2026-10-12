@@ -1,0 +1,12 @@
+[Unit]
+Description=Telegram alert (via Hermes) that the GitOps pull/apply failed
+Wants=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+ExecStart=/home/ubuntu/services/butler-iac/scripts/gitops-pull-notify.sh
+TimeoutStartSec=2min
+NoNewPrivileges=yes

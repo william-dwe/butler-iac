@@ -1,5 +1,6 @@
 [Unit]
 Description=GitOps: pull butler-iac manifests and apply with docker compose
+OnFailure=gitops-pull-notify.service
 Wants=docker.service network-online.target
 After=docker.service network-online.target
 
