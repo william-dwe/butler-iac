@@ -194,18 +194,10 @@
 # gitops-pull-apply runs as admin_user and must not need the root-only runtime env.
 # Hand it only the keys the root docker-compose.yml (manifests/*) interpolates.
 - name: Render GitOps stack env
-  ansible.builtin.shell:
-    cmd: |
-      set -euo pipefail
-      tmp=$(mktemp {{ control_dir | quote }}/.stack.env.XXXXXX)
-      trap 'rm -f "$tmp"' EXIT
-      { grep -E '^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY|HERMES_WEBUI_PASSWORD|TAILSCALE_IP|NINEROUTER_[A-Z0-9_]+)=' {{ butler_runtime_env | quote }} || true
-        printf 'WIKI_DIR=%s\nBUTLER_DIR=%s\n' {{ wiki_dir | quote }} {{ butler_dir | quote }}; } > "$tmp"
-      chown {{ admin_user }}:{{ admin_user }} "$tmp"
-      chmod 0600 "$tmp"
-      mv -f "$tmp" {{ (control_dir ~ '/stack.env') | quote }}
-      trap - EXIT
-    executable: /bin/bash
+  ansible.builtin.command: "{{ infra_dir }}/scripts/stack-env.sh"
+  environment:
+    WIKI_DIR: "{{ wiki_dir }}"
+    BUTLER_DIR: "{{ butler_dir }}"
   changed_when: false
   tags: [butler-deploy]
 
