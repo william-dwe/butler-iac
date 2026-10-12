@@ -1,9 +1,9 @@
 [Unit]
-Description=Pull and apply butler-iac manifests every 10 minutes
+Description=Check butler-iac for changes every minute and apply them (full apply at least every 30 minutes)
 
 [Timer]
 OnBootSec=5min
-OnUnitInactiveSec=10min
+OnUnitInactiveSec=1min
 Persistent=false
 
 [Install]
