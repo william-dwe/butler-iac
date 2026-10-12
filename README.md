@@ -170,8 +170,8 @@ Only butler-backend and butler-frontend are pulled from William's private GHCR (
 other image here is a public upstream vendor image (nousresearch/hermes-agent,
 ghcr.io/getpaseo/paseo, prom/*, grafana/grafana, gcr.io/cadvisor/cadvisor).
 
-Services applied by the timer: butler, hermes, paseo, 9router, headroom, node-exporter, cadvisor,
-prometheus, grafana. Secrets come from `~/.config/butler-iac/stack.env` (`ubuntu 0600`), rendered by
+Services applied by the timer: butler, hermes (incl. hermes-webui), paseo, 9router, headroom, node-exporter, cadvisor, blackbox,
+prometheus, grafana (dashboard `Hermes stack` from `manifests/grafana/dashboards/`). Secrets come from `~/.config/butler-iac/stack.env` (`ubuntu 0600`), rendered by
 the `butler` role; the timer fails if it is missing. All services share the project default network
 `butler_default`. One failing service fails `config` for the whole stack.
 

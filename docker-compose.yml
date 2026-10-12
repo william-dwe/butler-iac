@@ -11,5 +11,6 @@ include:
   - manifests/butler/compose.yml
   - manifests/node-exporter/compose.yml
   - manifests/cadvisor/compose.yml
+  - manifests/blackbox/compose.yml
   - manifests/prometheus/compose.yml
   - manifests/grafana/compose.yml

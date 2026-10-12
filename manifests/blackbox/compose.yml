@@ -1,0 +1,11 @@
+name: blackbox
+services:
+  blackbox:
+    image: prom/blackbox-exporter@sha256:9613f2884689b6fad9f1939f6a3b0388c93a022cfaededb19545b329b5c83dea # v0.29.0
+    container_name: blackbox
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/blackbox/blackbox.yml
+    # No published port: Prometheus reaches it on the project network (blackbox:9115).
+    volumes:
+      - ./blackbox.yml:/etc/blackbox/blackbox.yml:ro

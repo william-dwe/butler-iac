@@ -52,7 +52,7 @@ Butler role writes `BUTLER_DIR` and `WIKI_DIR` (absolute, from inventory) into `
 ## Architecture diagram
 
 `docs/architecture.{svg,html}` are maintained by Hermes, not by `ubuntu` agents. They predate the single-root-compose change; Hermes should update them to show:
-- one root `docker-compose.yml` (project `butler-iac`) that `include:`s every `manifests/<svc>/compose.yml` (butler, hermes, paseo, 9router, headroom, node-exporter, cadvisor, prometheus, grafana);
+- one root `docker-compose.yml` (project `butler-iac`) that `include:`s every `manifests/<svc>/compose.yml` (butler, hermes, paseo, 9router, headroom, node-exporter, cadvisor, blackbox, prometheus, grafana);
 - a shared project default network `butler_default` for all services (accepted isolation regression), plus `app-network` for backend/9router/headroom;
 - secrets from `~/.config/butler-iac/stack.env`, applied by the `gitops-pull-apply` timer, with no per-service Ansible roles for 9router or headroom.
 
