@@ -11,23 +11,28 @@ summary_file=${2:-}
 profile=${HERMES_PROFILE:-orchestrator}
 target=${HERMES_TARGET:-telegram}
 container=${HERMES_CONTAINER:-hermes-gateway}
-subject=${GITOPS_NOTIFY_SUBJECT:-[gitops pull FAILED] $(hostname)}
-[ "$mode" != success ] || subject=${GITOPS_NOTIFY_SUBJECT:-[gitops deploy OK] $(hostname)}
 repeat=${GITOPS_NOTIFY_REPEAT:-3600}
 state=${GITOPS_NOTIFY_STATE:-$HOME/.local/state/butler-iac/gitops-pull-notify}
-log=${GITOPS_NOTIFY_LOG:-$(journalctl -u gitops-pull-apply.service -n 40 --no-pager -o cat 2>/dev/null || true)}
+fence='```'
+
+send() { # $1 subject, $2 body
+  [ -z "${GITOPS_NOTIFY_DRY:-}" ] || { printf 'SUBJECT: %s\n%s\n' "$1" "$2"; return 1; }
+  printf '%s\n' "$2" | docker exec -i -u hermes "$container" hermes -p "$profile" send --to "$target" -s "$1" -f - >/dev/null
+}
 
 if [ "$mode" = success ]; then
-  msg=$(printf 'GitOps deploy succeeded.\n%s' "$(cat "$summary_file" 2>/dev/null)" | head -c 3800)
-  if [ -z "${GITOPS_NOTIFY_DRY:-}" ]; then
-    printf '%s\n' "$msg" | docker exec -i -u hermes "$container" hermes -p "$profile" send --to "$target" -s "$subject" -f - >/dev/null
+  subject=${GITOPS_NOTIFY_SUBJECT:-✅ GitOps deploy succeeded · $(hostname)}
+  details=$(cat "$summary_file" 2>/dev/null || true)
+  msg=$(printf 'butler-iac was pulled and applied.\n\n%s\n%s\n%s' "$fence" "${details//$fence/\'\'\'}" "$fence" | head -c 3800)
+  if send "$subject" "$msg"; then
     rm -f "$state"
     echo "success alert sent via hermes ($profile -> $target)"
-  else
-    printf 'SUBJECT: %s\n%s\n' "$subject" "$msg"
   fi
   exit 0
 fi
+
+subject=${GITOPS_NOTIFY_SUBJECT:-🚨 GitOps deploy FAILED · $(hostname)}
+log=${GITOPS_NOTIFY_LOG:-$(journalctl -u gitops-pull-apply.service -n 40 --no-pager -o cat 2>/dev/null || true)}
 
 # Last log lines, with anything token-shaped masked and each line capped.
 excerpt=$(printf '%s\n' "$log" | grep -vE '^\s*$' | tail -10 | sed -E 's/[A-Za-z0-9_\/+=.~-]{32,}/[redacted]/g' | cut -c1-180)
@@ -39,14 +44,11 @@ if [ -r "$state" ] && read -r last_sig last_ts <"$state" && [ "$last_sig" = "$si
   exit 0
 fi
 
-msg="The GitOps pull/apply run failed (retries every 10 min; repeats of the same error are sent at most hourly).
-Check: journalctl -u gitops-pull-apply.service
-Last log lines:
-$excerpt"
-msg=$(printf '%s' "$msg" | head -c 3800)
+msg=$(printf 'The butler-iac pull/apply did not complete. It retries every 10 min; the same error is re-sent at most hourly.\n\nLogs (last 10 lines):\n%s\n%s\n%s\nFull log: `journalctl -u gitops-pull-apply.service`' \
+  "$fence" "${excerpt//$fence/\'\'\'}" "$fence" | head -c 3800)
 
-[ -z "${GITOPS_NOTIFY_DRY:-}" ] || { printf 'SUBJECT: %s\n%s\n' "$subject" "$msg"; exit 0; }
-printf '%s\n' "$msg" | docker exec -i -u hermes "$container" hermes -p "$profile" send --to "$target" -s "$subject" -f - >/dev/null
-mkdir -p "$(dirname "$state")"
-printf '%s %s\n' "$sig" "$now" >"$state"
-echo "alert sent via hermes ($profile -> $target)"
+if send "$subject" "$msg"; then
+  mkdir -p "$(dirname "$state")"
+  printf '%s %s\n' "$sig" "$now" >"$state"
+  echo "alert sent via hermes ($profile -> $target)"
+fi

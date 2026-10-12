@@ -41,7 +41,7 @@ if [ "$before_rev" != "$after_rev" ] || [ "$before" != "$after" ] || [ -e "$stat
     [ "$before_rev" = "$after_rev" ] && echo "Repo: $after_rev (unchanged)" || echo "Repo: $before_rev -> $after_rev: $(git -C "$repo" log -1 --format=%s)"
     changed=$(diff <(echo "$before") <(echo "$after") | sed -n 's/^> \([^ ]*\) [^ ]* \(.*\)$/\1 (\2)/p' | head -15)
     [ -z "$changed" ] || printf 'Updated/recreated containers:\n%s\n' "$changed"
-    [ ! -e "$state" ] || echo "(recovered from an earlier failure)"
+    [ ! -e "$state" ] || echo "Recovered from an earlier failure."
   } >"$summary"
   "$repo/scripts/gitops-pull-notify.sh" success "$summary" || echo "warn: success alert failed" >&2
   rm -f "$summary"
