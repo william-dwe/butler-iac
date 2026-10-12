@@ -53,12 +53,13 @@ services:
       - "${TAILSCALE_IP:?set TAILSCALE_IP}:9119:9119"
 
   # hermes-webui (browser/Hermex Android client). Runs the agent in-process, so it needs the agent source of the SAME pinned
-  # digest as the gateway/dashboard (version-coupled upstream). agent-src refreshes the named volume from the pinned image on every `up`.
+  # digest as the gateway/dashboard (version-coupled upstream). agent-src refreshes the named volume from the pinned image on every `up`
+  # (chmod: some image files are root-only, and the WebUI user (uid 1003) must read the whole tree).
   agent-src:
     <<: *hermes
     container_name: hermes-agent-src
     restart: "no"
-    entrypoint: ["sh", "-c", "find /dst -mindepth 1 -delete && cp -a /opt/hermes/. /dst/"]
+    entrypoint: ["sh", "-c", "find /dst -mindepth 1 -delete && cp -a /opt/hermes/. /dst/ && chmod -R a+rX /dst"]
     command: []
     environment: []
     volumes:
