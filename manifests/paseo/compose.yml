@@ -7,6 +7,8 @@ services:
     restart: unless-stopped
     # Host netns: config.json listens on <tailscale_ip>:6767 exactly as the bare install did.
     network_mode: host
+    # Sessions without an explicit cwd start here instead of the image's empty /workspace.
+    working_dir: /home/agentops/workspace
     # ponytail: run as host hermes uid so identity files keep ownership; image user is "paseo".
     user: "1003:1003"
     volumes:
