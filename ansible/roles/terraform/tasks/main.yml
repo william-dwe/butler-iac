@@ -1,0 +1,32 @@
+# Pinned Terraform binary at /usr/local/bin/terraform. ponytail: checksum is fetched from the same host as the zip (no GPG check).
+- name: Install unzip
+  ansible.builtin.apt:
+    name: unzip
+    state: present
+
+- name: Check installed Terraform version
+  ansible.builtin.command: terraform version -json
+  register: terraform_installed
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+- name: Install Terraform
+  when: terraform_installed.rc != 0 or (terraform_installed.stdout | from_json).terraform_version != terraform_version
+  block:
+    - name: Download Terraform
+      ansible.builtin.get_url:
+        url: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_{{ terraform_arch }}.zip"
+        checksum: "sha256:https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_SHA256SUMS"
+        dest: "/tmp/terraform_{{ terraform_version }}.zip"
+        mode: "0600"
+
+    - name: Unpack Terraform
+      ansible.builtin.unarchive:
+        src: "/tmp/terraform_{{ terraform_version }}.zip"
+        dest: /usr/local/bin
+        remote_src: true
+        include: [terraform]
+        mode: "0755"
+        owner: root
+        group: root

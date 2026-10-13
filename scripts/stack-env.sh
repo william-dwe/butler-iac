@@ -11,7 +11,7 @@ for v in WIKI_DIR BUTLER_DIR; do
 done
 tmp=$(mktemp "$(dirname "$stack")/.stack.env.XXXXXX")
 trap 'rm -f "$tmp"' EXIT
-{ grep -E '^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY|HERMES_WEBUI_PASSWORD|TAILSCALE_IP|NINEROUTER_[A-Z0-9_]+|CLOUDFLARE_API_TOKEN)=' "$runtime" || true
+{ grep -E '^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY|HERMES_WEBUI_PASSWORD|TAILSCALE_IP|NINEROUTER_[A-Z0-9_]+|CLOUDFLARE_[A-Z0-9_]+|R2_[A-Z0-9_]+)=' "$runtime" || true
   printf 'WIKI_DIR=%s\nBUTLER_DIR=%s\n' "$WIKI_DIR" "$BUTLER_DIR"; } >"$tmp"
 chown "$owner:$owner" "$tmp"
 chmod 0600 "$tmp"

@@ -20,3 +20,12 @@ ansible/backups/
 .DS_Store
 *.log
 workspace/briefs/
+
+# Terraform: providers and state never go in git (state lives in the R2 backend); the lock file does.
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*_override.tf
+*.tfvars
+!*.tfvars.example
