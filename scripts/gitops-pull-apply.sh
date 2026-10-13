@@ -3,7 +3,7 @@
 # Env: ~/.config/butler-iac/stack.env (ubuntu 0600; rendered by the butler Ansible role).
 # Runs as ubuntu (docker group) from gitops-pull-apply.timer (every minute). Logs journald.
 # Cheap gate first: each run only does `git fetch`; the full apply (compose pull + up -d) runs when the repo has new
-# commits, or when the last full run is older than GITOPS_FULL_INTERVAL (default 1800s, catches updated image tags), or
+# commits, or when HEAD differs from the revision of the last full run (local commits), or when the last full run is older than GITOPS_FULL_INTERVAL (default 1800s, catches updated image tags), or
 # GITOPS_RETRY_INTERVAL (default 300s) after a failed full run. GITOPS_FORCE=1 skips the gate. Gated runs are silent.
 set -euo pipefail
 repo=${GITOPS_REPO:-$(cd "$(dirname "$0")/.." && pwd)}
@@ -14,15 +14,15 @@ retry_interval=${GITOPS_RETRY_INTERVAL:-300}
 
 git -C "$repo" fetch --quiet
 behind=$(git -C "$repo" rev-list --count 'HEAD..@{u}')
-last_ts=0 last_status=ok
-[ ! -r "$stamp" ] || read -r last_ts last_status <"$stamp" || true
+last_ts=0 last_status=ok last_rev=
+[ ! -r "$stamp" ] || read -r last_ts last_status last_rev <"$stamp" || true
 age=$(( $(date +%s) - last_ts ))
 interval=$full_interval
 [ "$last_status" = ok ] || interval=$retry_interval
-if [ -z "${GITOPS_FORCE:-}" ] && [ "$behind" -eq 0 ] && [ "$age" -lt "$interval" ]; then exit 0; fi
+if [ -z "${GITOPS_FORCE:-}" ] && [ "$behind" -eq 0 ] && [ "$last_rev" = "$(git -C "$repo" rev-parse --short HEAD)" ] && [ "$age" -lt "$interval" ]; then exit 0; fi
 echo "full apply: behind=$behind last_full=${age}s ago ($last_status)"
 mkdir -p "$(dirname "$stamp")"
-trap 'rc=$?; printf "%s %s\n" "$(date +%s)" "$([ $rc -eq 0 ] && echo ok || echo fail)" >"$stamp"' EXIT
+trap 'rc=$?; printf "%s %s %s\n" "$(date +%s)" "$([ $rc -eq 0 ] && echo ok || echo fail)" "$(git -C "$repo" rev-parse --short HEAD)" >"$stamp"' EXIT
 
 # Deploy fingerprint (containers + their image IDs) before/after, to alert only when a run changed something.
 state=${GITOPS_NOTIFY_STATE:-$HOME/.local/state/butler-iac/gitops-pull-notify}
