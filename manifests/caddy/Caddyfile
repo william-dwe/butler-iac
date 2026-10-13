@@ -35,10 +35,8 @@ prom.williamwibowo.com {
 	reverse_proxy 172.17.0.1:9090
 }
 
-butler.williamwibowo.com {
-	import private
-	reverse_proxy 127.0.0.1:3100
-}
+# Butler is NOT proxied here: it authenticates by the Tailscale-User-Login header that `tailscale serve` injects (:8444).
+# Caddy would pass a client-supplied copy of that header through unchanged (identity spoofing). See README.
 
 # Public site (personal website, later): no `import private`, bind the public side, and add an explicit
 # record for it in terraform/stacks/cloudflare/records.tf. Open 80/443 in UFW only when adding one.
