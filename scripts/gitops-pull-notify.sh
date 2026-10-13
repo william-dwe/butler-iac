@@ -12,7 +12,11 @@ profile=${HERMES_PROFILE:-orchestrator}
 target=${HERMES_TARGET:-telegram}
 container=${HERMES_CONTAINER:-hermes-gateway}
 repeat=${GITOPS_NOTIFY_REPEAT:-3600}
-state=${GITOPS_NOTIFY_STATE:-$HOME/.local/state/butler-iac/gitops-pull-notify}
+# Defaults describe gitops-pull-apply; other units (e.g. butler-review-queue-notify.service) override via Environment=.
+unit=${NOTIFY_UNIT:-gitops-pull-apply.service}
+title=${NOTIFY_TITLE:-GitOps deploy}
+what=${NOTIFY_WHAT:-The butler-iac pull/apply did not complete. It retries every 5 min; the same error is re-sent at most hourly.}
+state=${GITOPS_NOTIFY_STATE:-$HOME/.local/state/butler-iac/${NOTIFY_STATE_NAME:-gitops-pull-notify}}
 fence='```'
 
 send() { # $1 subject, $2 body
@@ -31,8 +35,8 @@ if [ "$mode" = success ]; then
   exit 0
 fi
 
-subject=${GITOPS_NOTIFY_SUBJECT:-🚨 GitOps deploy FAILED · $(hostname)}
-log=${GITOPS_NOTIFY_LOG:-$(journalctl -u gitops-pull-apply.service -n 40 --no-pager -o cat 2>/dev/null || true)}
+subject=${GITOPS_NOTIFY_SUBJECT:-🚨 $title FAILED · $(hostname)}
+log=${GITOPS_NOTIFY_LOG:-$(journalctl -u $unit -n 40 --no-pager -o cat 2>/dev/null || true)}
 
 # Last log lines, with anything token-shaped masked and each line capped.
 excerpt=$(printf '%s\n' "$log" | grep -vE '^\s*$' | tail -10 | sed -E 's/[A-Za-z0-9_\/+=.~-]{32,}/[redacted]/g' | cut -c1-180)
@@ -44,8 +48,8 @@ if [ -r "$state" ] && read -r last_sig last_ts <"$state" && [ "$last_sig" = "$si
   exit 0
 fi
 
-msg=$(printf 'The butler-iac pull/apply did not complete. It retries every 5 min; the same error is re-sent at most hourly.\n\nLogs (last 10 lines):\n%s\n%s\n%s\nFull log: `journalctl -u gitops-pull-apply.service`' \
-  "$fence" "${excerpt//$fence/\'\'\'}" "$fence" | head -c 3800)
+msg=$(printf '%s\n\nLogs (last 10 lines):\n%s\n%s\n%s\nFull log: `journalctl -u %s`' \
+  "$what" "$fence" "${excerpt//$fence/\'\'\'}" "$fence" "$unit" | head -c 3800)
 
 if send "$subject" "$msg"; then
   mkdir -p "$(dirname "$state")"

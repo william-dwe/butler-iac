@@ -158,6 +158,12 @@ timer (`gitops-pull-apply`, running as `ubuntu`, who owns the docker group) runs
 `manifests/<service>/compose.yml`. Only the repo owner commits manifest changes; nothing
 else gets docker-group access.
 
+### Polling and alerts
+- **Gate:** the timer fires every minute but each run only does `git fetch` (`scripts/gitops-pull-apply.sh`). The full apply runs when the remote has new commits, when HEAD differs from the last applied revision, 30 min after the last full run (picks up image tag updates; `GITOPS_FULL_INTERVAL`), or 5 min after a failed one (`GITOPS_RETRY_INTERVAL`). `GITOPS_FORCE=1` skips the gate. State: `~/.local/state/butler-iac/gitops-last-full`.
+- **Failure alert:** `gitops-pull-apply.service` has `OnFailure=gitops-pull-notify.service`, which sends a Telegram message through Hermes (`🚨 GitOps deploy FAILED`, last 10 log lines in a code block). The same error is re-sent at most hourly (`GITOPS_NOTIFY_REPEAT`).
+- **Success alert:** after a full apply that changed the repo revision or any container/image, or that recovers from an alerted failure, `✅ GitOps deploy succeeded` lists the revision change and recreated containers. Unchanged runs stay silent.
+- `scripts/gitops-pull-notify.sh` is generic: `NOTIFY_UNIT`, `NOTIFY_TITLE`, `NOTIFY_WHAT`, `NOTIFY_STATE_NAME` select the unit; `butler-review-queue-notify.service` reuses it (`OnFailure=` of `butler-review-queue.service`). Test without sending: `GITOPS_NOTIFY_DRY=1 scripts/gitops-pull-notify.sh`.
+
 ### Layout
 - `docker-compose.yml` -- root file (project `butler-iac`); only `include:`s manifests.
 - `manifests/<service>/compose.yml` -- one file per service.

@@ -68,6 +68,10 @@ Butler role writes `BUTLER_DIR` and `WIKI_DIR` (absolute, from inventory) into `
 
 `backup.timer` runs `scripts/backup.sh` (root) daily; repo `/home/ubuntu/backups/restic`, password `~/.config/butler-iac/backup.pass`, optional off-box config `backup.env`. Agents may read `systemctl status backup.service` and `restic snapshots` output but never print the password file. Failures alert via `backup-notify.service` (Hermes `send`, Telegram). `scripts/gdrive-relogin.sh` handles Drive OAuth; it is an administrator action and prints no secrets. See README "Backups".
 
+## GitOps alerts
+
+`gitops-pull-apply.timer` polls every minute (cheap `git fetch` gate; full apply on new commits or every 30 min). Failures alert via `gitops-pull-notify.service`, deploys that changed something alert on success, both through Hermes `send` to Telegram; `butler-review-queue.service` alerts the same way. See README "GitOps manifests > Polling and alerts".
+
 ## Security-sensitive knobs
 
 - `scripts/hermes-sudo.sh on` writes `/etc/sudoers.d/90-hermes-agent`, which gives `agentops` passwordless root. `off` removes only that file.
