@@ -2,4 +2,3 @@ admin_user: ubuntu
 agent_user: agentops
 infra_dir: "/home/{{ admin_user }}/services/butler-iac"
 runtime_env: "/home/{{ admin_user }}/.config/butler-iac/runtime.env"
-hermes_webui_serve_target: http://127.0.0.1:8787

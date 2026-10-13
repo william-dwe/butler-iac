@@ -37,19 +37,6 @@ compose=(docker compose --project-directory "$repo" --env-file "$envfile" -f "$r
 "${compose[@]}" pull
 "${compose[@]}" up -d --remove-orphans
 
-# Tailnet-only HTTPS :443 -> hermes-webui (loopback). Idempotent; never Funnel. Mirrors ansible/roles/hermes/tasks/webui_serve.yml.
-# ponytail: needs ubuntu allowed to manage Tailscale Serve (operator); on failure it warns and leaves the compose apply green.
-target=http://127.0.0.1:8787
-if [ "$(docker inspect -f '{{.State.Running}}' hermes-webui 2>/dev/null)" = true ]; then
-  status=$(tailscale serve status 2>&1 || true)
-  if [[ $status == *"$target"* ]]; then :
-  elif grep -qE '^https://[^:[:space:]]+[[:space:]]' <<<"$status"; then
-    echo "warn: HTTPS :443 Serve route already in use; not overwriting" >&2
-  else
-    tailscale serve --bg --https=443 "$target" || echo "warn: tailscale serve failed (is ubuntu the Tailscale operator?)" >&2
-  fi
-fi
-
 # Success alert: only if the run changed the repo or the containers, or it recovers from an alerted failure ($state exists).
 after_rev=$(git -C "$repo" rev-parse --short HEAD)
 after=$(snap || true)

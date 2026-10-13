@@ -35,6 +35,11 @@ prom.williamwibowo.com {
 	reverse_proxy 172.17.0.1:9090
 }
 
+butler.williamwibowo.com {
+	import private
+	reverse_proxy 127.0.0.1:3100
+}
+
 # Public site (personal website, later): no `import private`, bind the public side, and add an explicit
 # A record for it in ansible/group_vars/all/dns.yml (dns_public_records). Open 80/443 in UFW only when adding one.
 # www.williamwibowo.com {

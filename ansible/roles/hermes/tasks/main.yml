@@ -1,6 +1,2 @@
 - name: Configure Hermes user
   ansible.builtin.import_tasks: user.yml
-
-- name: Expose hermes-webui over Tailscale Serve
-  ansible.builtin.import_tasks: webui_serve.yml
-  tags: [hermes-webui-serve]

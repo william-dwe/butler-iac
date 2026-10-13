@@ -73,7 +73,7 @@ services:
       agent-src:
         condition: service_completed_successfully
     ports:
-      # Loopback only; exposed to the tailnet with `tailscale serve --bg 8787` (HTTPS :443). Docker-published ports bypass UFW.
+      # Loopback only; exposed to the tailnet by Caddy (chat.williamwibowo.com). Docker-published ports bypass UFW.
       - "127.0.0.1:8787:8787"
     environment:
       - WANTED_UID=1003
