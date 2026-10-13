@@ -140,6 +140,28 @@
     force: true
   tags: [butler-deploy]
 
+- name: Link Butler review queue units
+  ansible.builtin.file:
+    src: "{{ infra_dir }}/systemd/{{ item }}"
+    dest: "/etc/systemd/system/{{ item }}"
+    state: link
+    force: true
+  loop:
+    - butler-review-queue.service
+    - butler-review-queue-notify.service
+    - butler-review-queue.timer
+  register: butler_review_units
+  tags: [butler-deploy]
+
+- name: Enable Butler review queue timer
+  ansible.builtin.systemd:
+    name: butler-review-queue.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ butler_review_units.changed }}"
+  when: not ansible_check_mode
+  tags: [butler-deploy]
+
 - name: Read Butler Tailscale Serve configuration
   ansible.builtin.command: tailscale serve status
   register: butler_serve_status
