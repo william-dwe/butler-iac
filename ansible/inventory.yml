@@ -14,10 +14,10 @@ all:
     runtime_env: "{{ control_dir }}/runtime.env"
     dotenvx_key_path: "{{ control_dir }}/dotenvx.keys"
     butler_repo_url: git@github.com:william-dwe/butler.git
-    butler_dir: "/home/{{ agent_user }}/services/butler"
+    butler_dir: "/home/{{ agent_user }}/workspace/repos/butler"
     butler_deploy_ref: main
     wiki_repo_url: https://github.com/william-dwe/second-brain-wiki.git
-    wiki_dir: "/home/{{ agent_user }}/services/second-brain-wiki"
+    wiki_dir: "/home/{{ agent_user }}/workspace/repos/second-brain-wiki"
   children:
     vps:
       hosts:

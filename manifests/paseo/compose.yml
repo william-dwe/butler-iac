@@ -17,6 +17,8 @@ services:
       # OMP CLI for paseo-omp provider; Ansible-managed stable install path.
       - /opt/omp:/opt/omp:ro
       - /home/agentops/.hermes:/home/agentops/.hermes
+      # Project root for Paseo (create directories here); agentops-owned, setgid collab.
+      - /home/agentops/workspace:/home/agentops/workspace
       # OMP state + 9router provider config; owned by hermes (uid 1003), same as the container user.
       - /home/agentops/.omp:/home/paseo/.omp
       - /home/agentops/.pi:/home/paseo/.pi
