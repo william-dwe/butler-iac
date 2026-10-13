@@ -15,6 +15,7 @@ Interactive version with summary cards: [docs/architecture.html](docs/architectu
 | 9router | Docker container (`manifests/9router/compose.yml`); published host port | `http://<tailscale-ip>:20128` |
 | Headroom | `manifests/headroom/compose.yml`; Docker `app-network` only | `http://headroom:8787` |
 | Butler dashboard + API | `manifests/butler/compose.yml` (GHCR digests); backend joins `app-network` for 9router | Caddy `https://butler.williamwibowo.com` -> host loopback `:3100` (Caddy sets the `Tailscale-User-Login` identity header) |
+| Paseo | Docker container `paseo` (`manifests/paseo/compose.yml`, host network, daemon on `:6767`); proxied by Caddy (WebSocket works) | `https://paseo.williamwibowo.com` (needs `PASEO_HOSTNAMES`, see below) |
 | Caddy (reverse proxy) | Docker container (`manifests/caddy/`, host network, custom build with the Cloudflare DNS plugin); one block per service in `manifests/caddy/Caddyfile`, private = bound to the Tailscale IP; DNS from Terraform (`terraform/stacks/cloudflare`; `*.williamwibowo.com` -> Tailscale IP) | `https://<name>.williamwibowo.com` |
 
 ## Quick start (new VPS)
