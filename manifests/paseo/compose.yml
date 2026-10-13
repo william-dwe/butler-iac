@@ -26,6 +26,8 @@ services:
       - /home/agentops/.pi:/home/paseo/.pi
     environment:
       - HERMES_HOME=/home/agentops/.hermes
+      # Host-header allowlist: the daemon rejects names it does not know (proxied via Caddy).
+      - PASEO_HOSTNAMES=paseo.williamwibowo.com
     healthcheck:
       # No documented HTTP endpoint: TCP connect only. Needs bash in image (unverified).
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/${TAILSCALE_IP:?set TAILSCALE_IP}/6767"]
