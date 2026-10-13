@@ -1,0 +1,25 @@
+name: caddy # ignored when included from the root docker-compose.yml (project is butler-iac)
+
+services:
+  caddy:
+    build: .
+    image: butler-iac/caddy:2.11.7
+    pull_policy: build
+    container_name: caddy
+    restart: unless-stopped
+    # Host network: upstreams are mostly 127.0.0.1 and sites bind the Tailscale IP. Docker-published ports would bypass UFW.
+    # ponytail: restarts until tailscale0 has its IP after boot.
+    network_mode: host
+    environment:
+      TAILSCALE_IP: ${TAILSCALE_IP:?set TAILSCALE_IP in .env}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN in .env}
+      # 8443 until Tailscale Serve releases :443 (cutover), then set to 443.
+      CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-8443}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data: {}
+  caddy_config: {}

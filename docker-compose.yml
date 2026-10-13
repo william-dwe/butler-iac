@@ -14,3 +14,4 @@ include:
   - manifests/blackbox/compose.yml
   - manifests/prometheus/compose.yml
   - manifests/grafana/compose.yml
+  - manifests/caddy/compose.yml

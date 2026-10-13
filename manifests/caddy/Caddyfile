@@ -1,0 +1,43 @@
+# One block per service. Private = `import private` (bound to the Tailscale IP, so unreachable outside the tailnet).
+# DNS: *.williamwibowo.com -> Tailscale IP (ansible role dns); a public site needs its own A record, see below.
+{
+	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+	https_port {$CADDY_HTTPS_PORT}
+	auto_https disable_redirects
+}
+
+(private) {
+	bind {$TAILSCALE_IP}
+}
+
+grafana.williamwibowo.com {
+	import private
+	reverse_proxy 127.0.0.1:3000
+}
+
+hermes.williamwibowo.com {
+	import private
+	reverse_proxy {$TAILSCALE_IP}:9119
+}
+
+chat.williamwibowo.com {
+	import private
+	reverse_proxy 127.0.0.1:8787
+}
+
+router.williamwibowo.com {
+	import private
+	reverse_proxy {$TAILSCALE_IP}:20128
+}
+
+prom.williamwibowo.com {
+	import private
+	reverse_proxy 172.17.0.1:9090
+}
+
+# Public site (personal website, later): no `import private`, bind the public side, and add an explicit
+# A record for it in ansible/group_vars/all/dns.yml (dns_public_records). Open 80/443 in UFW only when adding one.
+# www.williamwibowo.com {
+# 	bind 0.0.0.0
+# 	reverse_proxy 127.0.0.1:PORT
+# }

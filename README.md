@@ -15,6 +15,7 @@ Interactive version with summary cards: [docs/architecture.html](docs/architectu
 | 9router | Docker container (`manifests/9router/compose.yml`); published host port | `http://<tailscale-ip>:20128` |
 | Headroom | `manifests/headroom/compose.yml`; Docker `app-network` only | `http://headroom:8787` |
 | Butler dashboard + API | `manifests/butler/compose.yml` (GHCR digests); backend joins `app-network` for 9router | Tailscale HTTPS `:8444` -> host loopback `:3100` |
+| Caddy (reverse proxy) | Docker container (`manifests/caddy/`, host network, custom build with the Cloudflare DNS plugin); one block per service in `manifests/caddy/Caddyfile`, private = bound to the Tailscale IP; DNS from Ansible role `dns` (`*.williamwibowo.com` -> Tailscale IP) | `https://<name>.williamwibowo.com:8443` (`:443` after the Tailscale Serve cutover) |
 
 ## Quick start (new VPS)
 

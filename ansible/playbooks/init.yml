@@ -6,8 +6,6 @@
       tags: [common]
     - role: tailscale
       tags: [tailscale]
-    - role: caddy
-      tags: [caddy]
     - role: hermes
       tags: [hermes]
     - role: node
@@ -20,3 +18,5 @@
       tags: [omp]
     - role: dotenvx
       tags: [dotenvx]
+    - role: dns
+      tags: [dns]

@@ -1,0 +1,4 @@
+dns_zone: williamwibowo.com
+# Every *.dns_zone name resolves to this host's Tailscale IP (looked up at run time), so new Caddy sites are private by default.
+# Public sites (e.g. the personal website) need their own record: [{ name: www, value: "<public ip or target>", type: A }]
+dns_public_records: []

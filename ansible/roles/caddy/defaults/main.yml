@@ -1,5 +1,0 @@
-caddy_config: /etc/caddy/Caddyfile
-caddy_ip_cache: /var/lib/caddy/tailscale_ip
-caddy_site_port: 8080
-caddy_tail_ip_retries: 30
-caddy_tail_ip_delay: 5
