@@ -9,6 +9,7 @@ terraform/
 ├── modules/                 reusable, provider-scoped building blocks (no backend, no provider config)
 │   └── cloudflare-dns/      cloudflare_dns_record for_each over a map of records
 └── stacks/                  one root module per provider/concern, each with its own state key
+    ├── r2-state/            the R2 bucket that holds every other stack's state (LOCAL state, see below)
     └── cloudflare/          zone williamwibowo.com
         ├── versions.tf      Terraform + provider constraints
         ├── backend.tf       R2 (S3 API) backend, credentials from the environment
@@ -40,23 +41,39 @@ Records stay DNS-only unless they are public: Cloudflare's proxy cannot reach a 
 
 ## State backend: Cloudflare R2 (one-time setup)
 
-1. Cloudflare dashboard -> R2 -> create bucket `butler-iac-tfstate` (enable object versioning if your plan offers it).
-2. R2 -> Manage API tokens -> create an **Object Read & Write** token scoped to that bucket. Copy the Access Key ID and Secret.
-3. As the administrator, on a trusted terminal (never in chat):
+`stacks/cloudflare` is configured for an R2 bucket (`backend.tf`, S3 API; settings follow Cloudflare's remote-backend
+example). Until the bucket and keys exist it runs on a temporary local backend (`backend_override.tf`, git-ignored).
+The backend settings and the migration were tested end to end against a local S3 stand-in (state migrated, then a plan that
+read state only from the bucket reported no changes). Not yet exercised against real R2. `use_lockfile` is left off: whether
+R2 honors the conditional writes it needs is unconfirmed, and there is a single operator.
+
+1. **Bucket.** Either create `butler-iac-tfstate` in the dashboard (R2 -> Create bucket), or let code do it: make a one-off API
+   token with *Account -> Workers R2 Storage -> Edit* and run
+   ```bash
+   CLOUDFLARE_API_TOKEN_OVERRIDE='<that token>' scripts/terraform.sh r2-state init
+   CLOUDFLARE_API_TOKEN_OVERRIDE='<that token>' scripts/terraform.sh r2-state plan -out=/tmp/r2.plan
+   CLOUDFLARE_API_TOKEN_OVERRIDE='<that token>' scripts/terraform.sh r2-state apply /tmp/r2.plan
+   ```
+   (`r2-state` keeps its own state in a git-ignored local file; it has `prevent_destroy`. Delete the one-off token afterwards.)
+2. **S3 keys.** R2 -> Manage API tokens -> create an **Object Read & Write** token scoped to that bucket. Copy the Access Key ID
+   and Secret.
+3. **Store them** as the administrator, on a trusted terminal (never in chat):
    ```bash
    dotenvx set R2_ACCESS_KEY_ID '...' -f .env
    dotenvx set R2_SECRET_ACCESS_KEY '...' -f .env
-   dotenvx set CLOUDFLARE_ACCOUNT_ID '...' -f .env     # dashboard sidebar / R2 overview
+   dotenvx set CLOUDFLARE_ACCOUNT_ID '...' -f .env      # dashboard sidebar / R2 overview
    sudo scripts/dotenv-env.sh render && sudo scripts/stack-env.sh
    ```
-4. Migrate the local state: delete `stacks/cloudflare/backend_override.tf` and `terraform.tfstate`'s copy stays as a backup until
-   verified, then:
+4. **Migrate** the cloudflare stack (keep `terraform.tfstate` as a backup until verified):
    ```bash
-   scripts/terraform.sh cloudflare init -migrate-state
+   rm terraform/stacks/cloudflare/backend_override.tf
+   scripts/terraform.sh cloudflare init -migrate-state -force-copy
    scripts/terraform.sh cloudflare plan -detailed-exitcode     # exit 0 = state matches
+   mv terraform/stacks/cloudflare/terraform.tfstate ~/tfstate-cloudflare.bak   # after verifying
    ```
 
-The API token used by Terraform needs Zone:Read and DNS:Edit on the zone. The R2 keys are a separate credential.
+The Terraform API token (`CLOUDFLARE_API_TOKEN`) needs Zone:Read and DNS:Edit on the zone. R2 keys are a separate credential.
+The wrapper fails with a clear message if a stack uses the R2 backend and the keys are missing.
 
 ## Rebuilding after losing state
 
