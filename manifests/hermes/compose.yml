@@ -89,7 +89,8 @@ services:
     volumes:
       - /home/agentops/.hermes:/home/hermeswebui/.hermes
       - hermes-agent-src:/home/hermeswebui/.hermes/hermes-agent:ro
-      # ponytail: repos only; wiki (librarian-only writes) and the Butler DB are deliberately not mounted.
+      # Butler task DB (tasks.py default path) so WebUI agents can manage tasks. The wiki stays unmounted (librarian-only writes).
+      - /home/agentops/data/butler:/var/lib/butler
       - /home/agentops/workspace/repos:/workspace
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8787/health', timeout=3)"]
