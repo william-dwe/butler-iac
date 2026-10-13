@@ -14,7 +14,7 @@ Interactive version with summary cards: [docs/architecture.html](docs/architectu
 | Hermes WebUI (Hermex Android client) | Docker container `hermes-webui` (`manifests/hermes/compose.yml`); loopback `:8787`, proxied by Caddy | `https://chat.williamwibowo.com` |
 | 9router | Docker container (`manifests/9router/compose.yml`); published host port | `http://<tailscale-ip>:20128` |
 | Headroom | `manifests/headroom/compose.yml`; Docker `app-network` only | `http://headroom:8787` |
-| Butler dashboard + API | `manifests/butler/compose.yml` (GHCR digests); backend joins `app-network` for 9router | Tailscale HTTPS `:8444` -> host loopback `:3100` |
+| Butler dashboard + API | `manifests/butler/compose.yml` (GHCR digests); backend joins `app-network` for 9router | Caddy `https://butler.williamwibowo.com` -> host loopback `:3100` (Caddy sets the `Tailscale-User-Login` identity header) |
 | Caddy (reverse proxy) | Docker container (`manifests/caddy/`, host network, custom build with the Cloudflare DNS plugin); one block per service in `manifests/caddy/Caddyfile`, private = bound to the Tailscale IP; DNS from Terraform (`terraform/stacks/cloudflare`; `*.williamwibowo.com` -> Tailscale IP) | `https://<name>.williamwibowo.com` |
 
 ## Quick start (new VPS)

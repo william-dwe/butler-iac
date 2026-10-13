@@ -38,9 +38,7 @@ render() {
   fi
   ip=$(tailscale ip -4 2>/dev/null | sed -n '1p')
   [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || { echo "Tailscale has no IPv4 address." >&2; exit 1; }
-  host=$(tailscale status --json 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)["Self"].get("DNSName", "").rstrip("."))') || { echo "Tailscale MagicDNS lookup failed." >&2; exit 1; }
-  [[ $host == *.ts.net ]] || { echo "Tailscale MagicDNS name unavailable." >&2; exit 1; }
-  origin=https://$host:8444
+  origin=${BUTLER_ORIGIN_URL:-https://butler.williamwibowo.com} # Caddy site; Butler trusts the identity header Caddy sets
   "$helper" rewrite "$decrypted" "$rendered" "$ip" "$origin"
   chown root:root "$rendered"
   chmod 0600 "$rendered"

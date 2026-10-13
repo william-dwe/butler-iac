@@ -162,22 +162,6 @@
   when: not ansible_check_mode
   tags: [butler-deploy]
 
-- name: Read Butler Tailscale Serve configuration
-  ansible.builtin.command: tailscale serve status
-  register: butler_serve_status
-  changed_when: false
-  failed_when: false
-  check_mode: false
-  tags: [butler-deploy]
-
-- name: Configure Butler Tailscale Serve
-  ansible.builtin.command: "tailscale serve --bg --https={{ butler_serve_port }} {{ butler_serve_target }}"
-  when: >-
-    butler_serve_status.rc != 0 or
-    (':' ~ (butler_serve_port | string)) not in butler_serve_status.stdout or
-    butler_serve_target not in butler_serve_status.stdout
-  tags: [butler-deploy]
-
 - name: Remove legacy Butler systemd units
   ansible.builtin.file:
     path: "{{ item }}"

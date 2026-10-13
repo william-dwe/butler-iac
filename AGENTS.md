@@ -22,7 +22,7 @@ no wiki notes or Butler application code.
 |---|---|---|---|
 |Hermes gateway + dashboard (web + TUI)|`manifests/hermes/compose.yml`|containers `hermes-gateway`, `hermes-dashboard`|`http://<tailscale-ip>:9119`|
 |Hermes WebUI (Hermex client)|`manifests/hermes/compose.yml` (`webui`, `agent-src` init)|container `hermes-webui`|host loopback `:8787` -> Caddy `https://chat.williamwibowo.com` (tailnet only)|
-|Butler dashboard + API|`manifests/butler/compose.yml` project `butler-iac`|containers; shared default network `butler_default`|Tailscale HTTPS `:8444` -> host loopback `:3100` -> `127.0.0.1:8765`|
+|Butler dashboard + API|`manifests/butler/compose.yml` project `butler-iac`|containers; shared default network `butler_default`|Caddy `https://butler.williamwibowo.com` -> host loopback `:3100` -> `127.0.0.1:8765` (Caddy injects `Tailscale-User-Login`; keep the site private)|
 |9router (LLM router)|`manifests/9router/compose.yml`|container `9router`|`http://<tailscale-ip>:20128`|
 |Headroom (prompt compression)|`manifests/headroom/compose.yml`|container `headroom`|`http://headroom:8787`, Docker network only|
 

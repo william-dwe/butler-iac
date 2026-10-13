@@ -13,6 +13,7 @@ services:
     environment:
       TAILSCALE_IP: ${TAILSCALE_IP:?set TAILSCALE_IP in .env}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN in .env}
+      BUTLER_LOGIN: ${BUTLER_LOGIN:?set BUTLER_LOGIN in .env}
       CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-443}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro

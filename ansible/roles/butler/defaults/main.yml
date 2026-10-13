@@ -5,6 +5,4 @@ control_dir: "/home/{{ admin_user }}/.config/butler-iac"
 butler_runtime_env: "{{ control_dir }}/runtime.env"
 butler_review_helper_dir: /usr/local/lib/personal-agent-infra
 butler_review_helper: /usr/local/lib/personal-agent-infra/butler-review-queue.sh
-butler_serve_port: 8444
-butler_serve_target: http://127.0.0.1:3100
 butler_github_known_host: github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl

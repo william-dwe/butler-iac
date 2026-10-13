@@ -21,7 +21,7 @@ class DotenvEnvTest(unittest.TestCase):
 
     def rewrite(self, content):
         self.source.write_bytes(content)
-        dotenv_env.rewrite(self.source, self.output, "100.64.0.1", "https://host.ts.net:8444")
+        dotenv_env.rewrite(self.source, self.output, "100.64.0.1", "https://butler.example.com")
         return self.output.read_bytes()
 
     def test_valid_export_and_host_values(self):
@@ -34,7 +34,7 @@ class DotenvEnvTest(unittest.TestCase):
         self.assertEqual(
             output,
             b"\n# imported\n\nSECRET=not-disclosed\nTAILSCALE_IP=100.64.0.1\n"
-            b"BUTLER_ORIGIN=https://host.ts.net:8444\nBUTLER_WEB_ORIGIN=https://host.ts.net:8444\n",
+            b"BUTLER_ORIGIN=https://butler.example.com\nBUTLER_WEB_ORIGIN=https://butler.example.com\n",
         )
 
     def test_rejects_invalid_or_duplicate_assignments(self):
@@ -42,7 +42,7 @@ class DotenvEnvTest(unittest.TestCase):
             with self.subTest(content=content.split(b"=", 1)[0]):
                 self.source.write_bytes(content)
                 with self.assertRaises(ValueError):
-                    dotenv_env.rewrite(self.source, self.output, "100.64.0.1", "https://host.ts.net:8444")
+                    dotenv_env.rewrite(self.source, self.output, "100.64.0.1", "https://butler.example.com")
 
 
 if __name__ == "__main__":
