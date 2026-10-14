@@ -8,3 +8,13 @@ modules:
       valid_status_codes: []
       follow_redirects: false
       preferred_ip_protocol: ip4
+  # Liveness only: any answer the app gives without login counts as up (302 -> login page, 401 -> Butler wants the
+  # Tailscale-User-Login header that Caddy injects). Use for apps with no unauthenticated health endpoint.
+  http_alive:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      valid_status_codes: [200, 302, 401]
+      follow_redirects: false
+      preferred_ip_protocol: ip4
