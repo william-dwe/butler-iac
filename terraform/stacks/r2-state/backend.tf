@@ -12,5 +12,6 @@ terraform {
     skip_metadata_api_check     = true
     skip_s3_checksum            = true
     use_path_style              = true
+    use_lockfile                = true # S3-native lock (PutObject If-None-Match); R2 documents support
   }
 }
