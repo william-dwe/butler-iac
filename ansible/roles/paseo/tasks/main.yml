@@ -1,14 +1,3 @@
-- name: Read Tailscale IPv4 address
-  ansible.builtin.command: tailscale ip -4
-  register: paseo_tail_ip
-  changed_when: false
-  check_mode: false
-
-- name: Require a Tailscale IPv4 address
-  ansible.builtin.assert:
-    that: paseo_tail_ip.stdout is match('^100\\.[0-9]+\\.[0-9]+\\.[0-9]+$')
-    fail_msg: "Tailscale IPv4 unavailable; refusing network bind"
-
 - name: Create Paseo home
   ansible.builtin.file:
     path: "/home/{{ agent_user }}/.paseo"
@@ -25,13 +14,13 @@
     group: "{{ agent_user }}"
     mode: "0755"
 
-- name: Configure Paseo on Tailscale only
+- name: Seed Paseo config (loopback; Caddy is the way in)
   ansible.builtin.copy:
     dest: "/home/{{ agent_user }}/.paseo/config.json"
-    content: "{{ {'version': 1, 'daemon': {'listen': paseo_tail_ip.stdout ~ ':6767', 'relay': {'enabled': false}}, 'features': {'webUi': {'enabled': true}}} | to_nice_json }}\n"
+    content: "{{ {'version': 1, 'daemon': {'listen': '127.0.0.1:6767', 'relay': {'enabled': false}}, 'features': {'webUi': {'enabled': true}}} | to_nice_json }}\n"
     owner: "{{ agent_user }}"
     group: "{{ agent_user }}"
     mode: "0600"
     force: false
-    # ponytail: seed only; live config.json has hand-edited profiles/plugins. Edit listen manually if Tailscale IP changes.
+    # ponytail: seed only; live config.json has hand-edited profiles/plugins. PASEO_LISTEN in compose wins over daemon.listen.
 

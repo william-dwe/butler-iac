@@ -5,7 +5,7 @@ services:
     image: ghcr.io/getpaseo/paseo@sha256:ea6a922a7282d5368f7d0eae17caff6ce5ccde2bbac3f559c2e4c483d1cf2059 # :latest index, resolved 2026-10-10
     container_name: paseo
     restart: unless-stopped
-    # Host netns: config.json listens on <tailscale_ip>:6767 exactly as the bare install did.
+    # Host netns. Listens on loopback only: Caddy (paseo.williamwibowo.com) is the one way in.
     network_mode: host
     # Sessions without an explicit cwd start here instead of the image's empty /workspace.
     working_dir: /home/agentops/workspace
@@ -30,9 +30,12 @@ services:
       - HERMES_HOME=/home/agentops/.hermes
       # Host-header allowlist: the daemon rejects names it does not know (proxied via Caddy).
       - PASEO_HOSTNAMES=paseo.williamwibowo.com
+      # The image defaults to 0.0.0.0:6767, which overrides daemon.listen in config.json. Host netns means 0.0.0.0
+      # is every host interface (UFW was the only guard), so pin loopback.
+      - PASEO_LISTEN=127.0.0.1:6767
     healthcheck:
       # No documented HTTP endpoint: TCP connect only. Needs bash in image (unverified).
-      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/${TAILSCALE_IP:?set TAILSCALE_IP}/6767"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/6767"]
       interval: 30s
       timeout: 5s
       retries: 3
