@@ -24,6 +24,8 @@ services:
       # OMP state + 9router provider config; owned by hermes (uid 1003), same as the container user.
       - /home/agentops/.omp:/home/paseo/.omp
       - /home/agentops/.pi:/home/paseo/.pi
+      # Shared agent skills (~/.agents/skills); omp reads them via skills.enableAgentsUser.
+      - /home/agentops/.agents:/home/paseo/.agents:ro
     environment:
       - HERMES_HOME=/home/agentops/.hermes
       # Host-header allowlist: the daemon rejects names it does not know (proxied via Caddy).
