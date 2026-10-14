@@ -10,8 +10,10 @@ shift
 [ -d "$repo/terraform/stacks/$stack" ] || { echo "unknown stack: $stack" >&2; exit 1; }
 get() { sed -n "s/^$1=//p" "$envfile" | head -n1 | sed -E 's/^"(.*)"$/\1/'; }
 
-# CLOUDFLARE_API_TOKEN_OVERRIDE: one-off token with more scope (e.g. R2 edit for the r2-state stack); never stored.
-export CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN_OVERRIDE:-$(get CLOUDFLARE_API_TOKEN)}
+# Terraform uses its own token (CLOUDFLARE_TERRAFORM_TOKEN: zone read + DNS edit + R2 edit), separate from the Caddy
+# container's DNS-only CLOUDFLARE_API_TOKEN, which is only a fallback. CLOUDFLARE_API_TOKEN_OVERRIDE wins for one-off use.
+export CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN_OVERRIDE:-$(get CLOUDFLARE_TERRAFORM_TOKEN)}
+[ -n "$CLOUDFLARE_API_TOKEN" ] || export CLOUDFLARE_API_TOKEN=$(get CLOUDFLARE_API_TOKEN)
 export TF_VAR_tailscale_ip=$(tailscale ip -4 | sed -n '1p')
 export TF_VAR_account_id=$(get CLOUDFLARE_ACCOUNT_ID)
 # R2 state backend (S3 API). Skipped until the keys exist, so `init -backend=false` and local runs still work.

@@ -27,7 +27,7 @@ git-ignored (this repo is public).
 
 ## Running
 
-Always through the wrapper. It loads `CLOUDFLARE_API_TOKEN` and the R2 credentials from `stack.env` and sets
+Always through the wrapper. It loads `CLOUDFLARE_TERRAFORM_TOKEN` (falls back to `CLOUDFLARE_API_TOKEN`) and the R2 credentials from `stack.env` and sets
 `TF_VAR_tailscale_ip` from `tailscale ip -4`, so no IP or secret is committed:
 
 ```bash
@@ -67,19 +67,17 @@ R2 honors the conditional writes it needs is unconfirmed, and there is a single 
 
 ### Track the bucket as code
 
-`stacks/r2-state` keeps its state in the bucket it manages. Importing needs an R2-capable API token (the DNS token and the
-S3 keys cannot read bucket metadata). Make a one-off token with *Account -> Workers R2 Storage -> Edit*, then:
+`stacks/r2-state` keeps its state in the bucket it manages. Importing needs an R2-capable API token, which `CLOUDFLARE_TERRAFORM_TOKEN` is (the Caddy DNS token and the S3 keys cannot read bucket metadata):
 
 ```bash
-export CLOUDFLARE_API_TOKEN_OVERRIDE='<that token>'     # this shell only; delete the token afterwards
 scripts/terraform.sh r2-state init
 scripts/terraform.sh r2-state import cloudflare_r2_bucket.tfstate "<account_id>/butler-iac-tfstate"
 scripts/terraform.sh r2-state plan -detailed-exitcode   # 0 = bucket matches the code
 ```
 
-On a new VPS the bucket already exists, so only `init` is needed. Reading or planning `r2-state` always needs the one-off token.
+On a new VPS the bucket already exists, so only `init` is needed.
 
-The Terraform API token (`CLOUDFLARE_API_TOKEN`) needs Zone:Read and DNS:Edit on the zone. R2 keys are a separate credential.
+`CLOUDFLARE_TERRAFORM_TOKEN` needs Zone:Read and DNS:Edit on the zone plus Account -> Workers R2 Storage -> Edit; keep it out of containers. `CLOUDFLARE_API_TOKEN` stays DNS-edit only for Caddy. R2 S3 keys are a third credential.
 The wrapper fails with a clear message if a stack uses the R2 backend and the keys are missing.
 
 ## Rebuilding after losing state
