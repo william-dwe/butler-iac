@@ -71,7 +71,7 @@ R2 honors the conditional writes it needs is unconfirmed, and there is a single 
 
 ```bash
 scripts/terraform.sh r2-state init
-scripts/terraform.sh r2-state import cloudflare_r2_bucket.tfstate "<account_id>/butler-iac-tfstate"
+scripts/terraform.sh r2-state import cloudflare_r2_bucket.tfstate "<account_id>/butler-iac-tfstate/default"   # id is account/bucket/jurisdiction
 scripts/terraform.sh r2-state plan -detailed-exitcode   # 0 = bucket matches the code
 ```
 
