@@ -44,7 +44,6 @@ Records stay DNS-only unless they are public: Cloudflare's proxy cannot reach a 
 `stacks/cloudflare` is configured for an R2 bucket (`backend.tf`, S3 API; settings follow Cloudflare's remote-backend
 example). The cloudflare stack was migrated to it and verified (a plan reading only from the bucket reported no changes).
 `use_lockfile` is on: R2 documents `If-None-Match` support on PutObject, and a test with two simultaneous plans rejected the second with `412 PreconditionFailed`. A crashed run can leave a stale `.tflock` object; clear it with `scripts/terraform.sh <stack> force-unlock <ID>`.
-R2 honors the conditional writes it needs is unconfirmed, and there is a single operator.
 
 1. **Bucket.** Create `butler-iac-tfstate` in the dashboard (R2 -> Create bucket). It is then tracked as code by `r2-state`
    (see "Track the bucket as code" below).
