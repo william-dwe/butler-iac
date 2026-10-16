@@ -5,6 +5,9 @@ services:
   browser:
     image: lscr.io/linuxserver/chromium@sha256:9761e4dce2375165ab85566d5a58920525d49c49469ed7a08a6d874dcdb1cedc # :latest index, resolved 2026-10-15
     container_name: browser
+    # Stable hostname: Chromium's profile lock embeds it, and a changed hostname after recreate makes it treat the lock as another
+    # machine's and refuse to open the debug port.
+    hostname: browser
     restart: unless-stopped
     shm_size: 1gb
     # Own network, NOT butler_default: Chrome's DevTools port is full control of the logged-in browser, so only
