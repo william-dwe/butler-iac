@@ -9,6 +9,7 @@ include:
   - manifests/hermes/compose.yml
   - manifests/paseo/compose.yml
   - manifests/butler/compose.yml
+  - manifests/portfolio/compose.yml
   - manifests/node-exporter/compose.yml
   - manifests/cadvisor/compose.yml
   - manifests/blackbox/compose.yml

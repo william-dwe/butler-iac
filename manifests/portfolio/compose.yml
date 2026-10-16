@@ -1,0 +1,25 @@
+name: portfolio
+
+# Public website (williamwibowo.com, www redirects to it). Image built by william-dwe/william-portfolio
+# (.github/workflows/publish.yml), which repins this digest through .github/workflows/bump-digest.yml here.
+# Package is public on GHCR, so no login is needed to pull it.
+services:
+  portfolio:
+    image: ghcr.io/william-dwe/portfolio@sha256:543c6071e5ddc4eff3acb9e209f2897b710d5f3eab7181073a3e49a349ff032c
+    container_name: portfolio
+    restart: unless-stopped
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # ponytail: Next.js keeps its image-optimizer cache in .next/cache; tmpfs means it starts cold after a restart.
+    tmpfs:
+      - /tmp
+      - /app/.next/cache:uid=1000,gid=1000
+    # The box is already under CPU/memory pressure (see the Host health dashboard); idle use is ~100 MiB.
+    mem_limit: 384m
+    pids_limit: 200
+    # Caddy runs on the host network, so it reaches the site on loopback. The project network lets blackbox probe it by name.
+    ports:
+      - "127.0.0.1:3200:3000"

@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     labels:
       # ponytail: a single-file bind mount keeps the old inode after `git pull`, so bump this whenever prometheus.yml changes to force a recreate.
-      config-rev: "3"
+      config-rev: "4"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.path=/prometheus

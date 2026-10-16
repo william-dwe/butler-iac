@@ -21,6 +21,8 @@ scrape_configs:
         labels: { service: grafana }
       - targets: ["http://prometheus:9090/-/healthy"]
         labels: { service: prometheus }
+      - targets: ["http://portfolio:3000/"]
+        labels: { service: portfolio }
     relabel_configs: &blackbox_relabel
       - source_labels: [__address__]
         target_label: __param_target
