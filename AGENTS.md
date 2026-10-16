@@ -24,11 +24,12 @@ no wiki notes or Butler application code.
 |Hermes WebUI (Hermex client)|`manifests/hermes/compose.yml` (`webui`, `agent-src` init)|container `hermes-webui`|host loopback `:8787` -> Caddy `https://chat.williamwibowo.com` (tailnet only)|
 |Butler dashboard + API|`manifests/butler/compose.yml` project `butler-iac`|containers; shared default network `butler_default`|Caddy `https://butler.williamwibowo.com` -> host loopback `:3100` -> `127.0.0.1:8765` (Caddy injects `Tailscale-User-Login`; keep the site private)|
 |9router (LLM router)|`manifests/9router/compose.yml`|container `9router`|`http://<tailscale-ip>:20128`|
+|Website (william-portfolio)|`manifests/portfolio/compose.yml`|container `portfolio` (public GHCR image, digest bumped by the site repo's CI)|loopback `:3200` -> Caddy on `PUBLIC_BIND_IP` -> Cloudflare -> `https://williamwibowo.com`|
 |Headroom (prompt compression)|`manifests/headroom/compose.yml`|container `headroom`|`http://headroom:8787`, Docker network only|
 
 - The dashboard runs as the `hermes-dashboard` container and owns `:9119`. Restarting it drops open browser and agent sessions. The old per-user systemd units (`hermes-dashboard@<user>`) are retired since the Docker cutover.
 - 9router calls Headroom's `/v1/compress` without a token. For that reason Headroom must not publish a host port or a Tailscale Serve rule. Verify with `docker port headroom` (must be empty) and `tailscale serve status`.
-- The network is locked down by UFW (role `common`, `tasks/firewall.yml`): incoming traffic is denied by default, except `tailscale0` and port 22. The dashboard runs with `--insecure` on `0.0.0.0` and depends on this firewall.
+- The network is locked down by UFW (role `common`, `tasks/firewall.yml`): incoming traffic is denied by default, except `tailscale0`, port 22 and port 443 from Cloudflare's IPv4 ranges (the public website; the apex and www records are proxied, so the origin IP stays out of DNS). The dashboard runs with `--insecure` on `0.0.0.0` and depends on this firewall.
 - 9router is published only on the Tailscale IP (`TAILSCALE_IP` rendered into `~/.config/butler-iac/runtime.env`; get it with `tailscale ip -4`). Never publish on `0.0.0.0`, because Docker-published ports bypass UFW.
 
 ## Layout

@@ -7,11 +7,16 @@ services:
     pull_policy: build
     container_name: caddy
     restart: unless-stopped
+    labels:
+      # ponytail: a single-file bind mount keeps the old inode after `git pull`; bump on every Caddyfile change to force a recreate.
+      config-rev: "1"
     # Host network: upstreams are mostly 127.0.0.1 and sites bind the Tailscale IP. Docker-published ports would bypass UFW.
     # ponytail: restarts until tailscale0 has its IP after boot.
     network_mode: host
     environment:
       TAILSCALE_IP: ${TAILSCALE_IP:?set TAILSCALE_IP in .env}
+      # The host's NIC address (not the public IP: the cloud NAT translates it). Public sites bind it; see Caddyfile.
+      PUBLIC_BIND_IP: ${PUBLIC_BIND_IP:?set PUBLIC_BIND_IP in .env}
       CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN in .env}
       BUTLER_LOGIN: ${BUTLER_LOGIN:?set BUTLER_LOGIN in .env}
       CADDY_HTTPS_PORT: ${CADDY_HTTPS_PORT:-443}

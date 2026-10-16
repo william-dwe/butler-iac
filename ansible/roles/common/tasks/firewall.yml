@@ -20,6 +20,17 @@
     port: "22"
     proto: tcp
 
+# Public website: Caddy binds the NIC address for williamwibowo.com/www and only Cloudflare's proxy may connect.
+# The cloud provider's security group must also allow inbound TCP 443 (outside this repo).
+- name: Allow HTTPS from Cloudflare only
+  community.general.ufw:
+    rule: allow
+    port: "443"
+    proto: tcp
+    from_ip: "{{ item }}"
+    comment: "Cloudflare proxy -> Caddy (public site)"
+  loop: "{{ cloudflare_ipv4_ranges }}"
+
 - name: Enable firewall
   community.general.ufw:
     state: enabled

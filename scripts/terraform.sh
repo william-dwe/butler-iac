@@ -16,6 +16,7 @@ export CLOUDFLARE_API_TOKEN=${CLOUDFLARE_API_TOKEN_OVERRIDE:-$(get CLOUDFLARE_TE
 [ -n "$CLOUDFLARE_API_TOKEN" ] || export CLOUDFLARE_API_TOKEN=$(get CLOUDFLARE_API_TOKEN)
 export TF_VAR_tailscale_ip=$(tailscale ip -4 | sed -n '1p')
 export TF_VAR_account_id=$(get CLOUDFLARE_ACCOUNT_ID)
+export TF_VAR_public_ip=$(get PUBLIC_IP)
 # R2 state backend (S3 API). Skipped until the keys exist, so `init -backend=false` and local runs still work.
 if [ -n "$(get R2_ACCESS_KEY_ID)" ]; then
   export AWS_ACCESS_KEY_ID=$(get R2_ACCESS_KEY_ID) AWS_SECRET_ACCESS_KEY=$(get R2_SECRET_ACCESS_KEY)

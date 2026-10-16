@@ -4,10 +4,12 @@ locals {
     wildcard = { type = "A", name = "*", content = var.tailscale_ip, ttl = 300, comment = "Private services (Caddy, tailnet only)" }
   }
 
-  # Website on Netlify.
+  # Website, served by Caddy on this VPS (manifests/portfolio). Proxied: Cloudflare terminates TLS for visitors and
+  # connects to Caddy on 443 (SSL/TLS mode Full or Full (strict)); UFW admits only Cloudflare's ranges.
+  # Rollback to Netlify: apex A 75.2.60.5 and www CNAME incomparable-donut-afc15b.netlify.app, both proxied.
   web_records = {
-    apex = { type = "A", name = "@", content = "75.2.60.5", proxied = true }
-    www  = { type = "CNAME", name = "www", content = "incomparable-donut-afc15b.netlify.app", proxied = true }
+    apex = { type = "A", name = "@", content = var.public_ip, proxied = true }
+    www  = { type = "CNAME", name = "www", content = var.zone_name, proxied = true }
   }
 
   # Mail: Squarespace forwarding (Mailgun MX) and Gmail send-as. One SPF record only.

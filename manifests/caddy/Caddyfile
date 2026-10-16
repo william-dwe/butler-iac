@@ -1,5 +1,5 @@
 # One block per service. Private = `import private` (bound to the Tailscale IP, so unreachable outside the tailnet).
-# DNS: *.williamwibowo.com -> Tailscale IP (terraform/stacks/cloudflare); a public site needs its own record, see below.
+# DNS: *.williamwibowo.com -> Tailscale IP; the apex and www are explicit proxied records (terraform/stacks/cloudflare).
 {
 	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 	https_port {$CADDY_HTTPS_PORT}
@@ -49,9 +49,16 @@ butler.williamwibowo.com {
 	}
 }
 
-# Public site (personal website, later): no `import private`, bind the public side, and add an explicit
-# record for it in terraform/stacks/cloudflare/records.tf. Open 80/443 in UFW only when adding one.
-# www.williamwibowo.com {
-# 	bind 0.0.0.0
-# 	reverse_proxy 127.0.0.1:PORT
-# }
+# Public site. Not `import private`: it binds the host's NIC address (the cloud NAT forwards the public IP to it; a
+# 0.0.0.0 bind would clash with the Tailscale-bound sites on :443). UFW lets only Cloudflare's ranges reach 443, and
+# the apex/www records are proxied, so visitors never talk to this host directly.
+williamwibowo.com {
+	bind {$PUBLIC_BIND_IP}
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3200
+}
+
+www.williamwibowo.com {
+	bind {$PUBLIC_BIND_IP}
+	redir https://williamwibowo.com{uri} permanent
+}

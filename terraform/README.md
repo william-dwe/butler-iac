@@ -28,7 +28,7 @@ git-ignored (this repo is public).
 ## Running
 
 Always through the wrapper. It loads `CLOUDFLARE_TERRAFORM_TOKEN` (falls back to `CLOUDFLARE_API_TOKEN`) and the R2 credentials from `stack.env` and sets
-`TF_VAR_tailscale_ip` from `tailscale ip -4`, so no IP or secret is committed:
+`TF_VAR_tailscale_ip` from `tailscale ip -4` and `TF_VAR_public_ip` from `PUBLIC_IP` (the VPS's public IPv4, in the encrypted `.env`), so no IP or secret is committed:
 
 ```bash
 scripts/terraform.sh cloudflare plan -out=/tmp/cf.plan
@@ -36,7 +36,7 @@ scripts/terraform.sh cloudflare apply /tmp/cf.plan     # apply the reviewed plan
 ```
 
 Add a record: edit `stacks/cloudflare/records.tf`, plan, review, apply. Private services need no record, the wildcard covers
-`*.williamwibowo.com` and points at the Tailscale IP. A public site needs its own record (keep the Caddy block's `bind` in step).
+`*.williamwibowo.com` and points at the Tailscale IP. The website is the exception: the apex and `www` are explicit proxied records (`web_records`) pointing at `PUBLIC_IP`, and the matching Caddy blocks bind `PUBLIC_BIND_IP`. Cloudflare's SSL/TLS mode must be Full or Full (strict) for them, since the proxy connects to Caddy on 443.
 Records stay DNS-only unless they are public: Cloudflare's proxy cannot reach a `100.x` address.
 
 ## State backend: Cloudflare R2 (one-time setup)
