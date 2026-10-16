@@ -38,7 +38,7 @@ services:
       - app-network
 
   frontend:
-    image: ghcr.io/william-dwe/butler-frontend@sha256:9c7f60c2361b8676bc17975757b84bbb6418eac79a2850c18ddb6bf8468ff232
+    image: ghcr.io/william-dwe/butler-frontend@sha256:d38b75b819977923c042af6f54642cb6fd44a9765334749b9e2d7d94dfbc2ae3
     restart: unless-stopped
     environment:
       BUTLER_API: http://backend:8765
