@@ -7,6 +7,11 @@ services:
     container_name: browser
     restart: unless-stopped
     shm_size: 1gb
+    # Own network, NOT butler_default: Chrome's DevTools port is full control of the logged-in browser, so only
+    # playwright-mcp (below) may reach it. Fixed IP because Chrome rejects non-IP Host headers on CDP.
+    networks:
+      browser-net:
+        ipv4_address: 172.30.50.10
     ports:
       # Loopback only; exposed to the tailnet by Caddy (browser.williamwibowo.com). Docker-published ports bypass UFW.
       # Host 3000 is Grafana, hence 3010. The GUI has a passwordless-sudo terminal: never publish this wider.
@@ -36,6 +41,27 @@ services:
     command: TCP-LISTEN:9223,fork,reuseaddr TCP:127.0.0.1:9222
     depends_on:
       - browser
+
+  # Playwright MCP over HTTP for the Hermes agent: http://playwright-mcp:8931/mcp (configured with `hermes mcp add`).
+  # Attaches to the shared Chrome through the bridge. No auth of its own, and it joins butler_default so Hermes can reach it:
+  # any container on that network can drive the browser through it (accepted, same trust model as the rest of butler_default).
+  playwright-mcp:
+    image: mcr.microsoft.com/playwright/mcp@sha256:690763cbb437ee7233f538a953bb5390bf03791eb5c965b471e59d17a6132fcb # :latest, resolved 2026-10-17
+    container_name: playwright-mcp
+    restart: unless-stopped
+    command: ["--cdp-endpoint", "http://172.30.50.10:9223", "--shared-browser-context", "--host", "0.0.0.0", "--port", "8931", "--allowed-hosts", "playwright-mcp:8931"]
+    networks:
+      browser-net:
+        ipv4_address: 172.30.50.11
+      default: {}
+    depends_on:
+      - cdp-bridge
+
+networks:
+  browser-net:
+    ipam:
+      config:
+        - subnet: 172.30.50.0/24
 
 volumes:
   browser_config: {}
