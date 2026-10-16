@@ -11,6 +11,8 @@ services:
       # Loopback only; exposed to the tailnet by Caddy (browser.williamwibowo.com). Docker-published ports bypass UFW.
       # Host 3000 is Grafana, hence 3010. The GUI has a passwordless-sudo terminal: never publish this wider.
       - "127.0.0.1:3010:3000"
+      # CDP bridge (see cdp-bridge below). Full control of the logged-in browser: loopback only, never publish wider.
+      - "127.0.0.1:9223:9223"
     environment:
       - PUID=1000
       - PGID=1000
@@ -23,6 +25,17 @@ services:
     volumes:
       # Logged-in cookies live here: treat as a secret.
       - browser_config:/config
+
+  # Chrome binds CDP to the container's 127.0.0.1 only (it ignores --remote-debugging-address), so forward it from inside the
+  # same netns. Host header stays an IP (127.0.0.1:9223), which Chrome requires. Playwright MCP: --cdp-endpoint http://127.0.0.1:9223
+  cdp-bridge:
+    image: alpine/socat@sha256:fb3862c949af7c79996d0e514ee96128644d840835ed5368eeecb14a869de361 # :latest index, resolved 2026-10-17
+    container_name: browser-cdp-bridge
+    restart: unless-stopped
+    network_mode: service:browser
+    command: TCP-LISTEN:9223,fork,reuseaddr TCP:127.0.0.1:9222
+    depends_on:
+      - browser
 
 volumes:
   browser_config: {}
