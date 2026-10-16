@@ -25,6 +25,11 @@ chat.williamwibowo.com {
 	reverse_proxy 127.0.0.1:8787
 }
 
+browser.williamwibowo.com {
+	import private
+	reverse_proxy 127.0.0.1:3010
+}
+
 router.williamwibowo.com {
 	import private
 	reverse_proxy {$TAILSCALE_IP}:20128
@@ -44,8 +49,16 @@ paseo.williamwibowo.com {
 # so identity is fixed here. Safe only while this site stays private and the tailnet has a single owner (reachable == you).
 butler.williamwibowo.com {
 	import private
-	reverse_proxy 127.0.0.1:3100 {
-		header_up Tailscale-User-Login {$BUTLER_LOGIN}
+	# Write-only secrets API (scripts/env-set-api.py, systemd/env-set-api.service). Never reaches the Butler backend.
+	handle /_env/* {
+		reverse_proxy 127.0.0.1:8791 {
+			header_up Tailscale-User-Login {$BUTLER_LOGIN}
+		}
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3100 {
+			header_up Tailscale-User-Login {$BUTLER_LOGIN}
+		}
 	}
 }
 

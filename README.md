@@ -12,10 +12,12 @@ Interactive version with summary cards: [docs/architecture.html](docs/architectu
 |---|---|---|
 | Hermes gateway + dashboard | Docker containers `hermes-gateway`, `hermes-dashboard` (`manifests/hermes/compose.yml`) | `http://<tailscale-ip>:9119` |
 | Hermes WebUI (Hermex Android client) | Docker container `hermes-webui` (`manifests/hermes/compose.yml`); loopback `:8787`, proxied by Caddy | `https://chat.williamwibowo.com` |
+| Streamed Chromium | Docker container `browser` (`manifests/browser/compose.yml`); loopback `:3010`, proxied by Caddy; profile volume `browser_config` holds logged-in cookies; CDP `:9222` unpublished | `https://browser.williamwibowo.com` (basic auth `browser` / `BROWSER_PASSWORD`) |
 | 9router | Docker container (`manifests/9router/compose.yml`); published host port | `http://<tailscale-ip>:20128` |
 | Headroom | `manifests/headroom/compose.yml`; Docker `app-network` only | `http://headroom:8787` |
 | Butler dashboard + API | `manifests/butler/compose.yml` (GHCR digests); backend joins `app-network` for 9router | Caddy `https://butler.williamwibowo.com` -> host loopback `:3100` (Caddy sets the `Tailscale-User-Login` identity header) |
 | Website (william-portfolio) | Docker container `portfolio` (`manifests/portfolio/compose.yml`, public GHCR image pinned by digest; CI in the site repo bumps it); loopback `:3200`, proxied by Caddy on the NIC address; apex/www records proxied by Cloudflare, UFW admits only Cloudflare ranges | `https://williamwibowo.com` (`www` redirects) |
+| Env editor API | systemd `env-set-api.service` (`scripts/env-set-api.py`, loopback `:8791`, user `ubuntu`); Caddy routes `butler.williamwibowo.com/_env/*` to it; writes via `dotenvx set` (public key only) and commits `.env` locally, never pushes | Butler dashboard page (see `docs/butler-env-page.md`) |
 | Paseo | Docker container `paseo` (`manifests/paseo/compose.yml`, host network, daemon on `:6767`); proxied by Caddy (WebSocket works) | `https://paseo.williamwibowo.com` (needs `PASEO_HOSTNAMES`, see below) |
 | Caddy (reverse proxy) | Docker container (`manifests/caddy/`, host network, custom build with the Cloudflare DNS plugin); one block per service in `manifests/caddy/Caddyfile`, private = bound to the Tailscale IP; DNS from Terraform (`terraform/stacks/cloudflare`; `*.williamwibowo.com` -> Tailscale IP) | `https://<name>.williamwibowo.com` |
 
@@ -180,7 +182,7 @@ Only butler-backend and butler-frontend are pulled from William's private GHCR (
 other image here is a public upstream vendor image (nousresearch/hermes-agent,
 ghcr.io/getpaseo/paseo, prom/*, grafana/grafana, gcr.io/cadvisor/cadvisor).
 
-Services applied by the timer: butler, hermes (incl. hermes-webui), paseo, 9router, headroom, node-exporter, cadvisor, blackbox,
+Services applied by the timer: butler, hermes (incl. hermes-webui), browser, paseo, 9router, headroom, node-exporter, cadvisor, blackbox,
 prometheus, grafana (dashboard `Hermes stack` from `manifests/grafana/dashboards/`). Secrets come from `~/.config/butler-iac/stack.env` (`ubuntu 0600`), rendered by
 the `butler` role; the timer fails if it is missing. All services share the project default network
 `butler_default`. One failing service fails `config` for the whole stack.

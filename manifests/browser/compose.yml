@@ -1,0 +1,28 @@
+name: browser # ignored when included from the root docker-compose.yml (project is butler-iac)
+
+# Chromium streamed to a web page (linuxserver Selkies). A human logs in / solves CAPTCHAs here; an agent can attach over CDP later.
+services:
+  browser:
+    image: lscr.io/linuxserver/chromium@sha256:9761e4dce2375165ab85566d5a58920525d49c49469ed7a08a6d874dcdb1cedc # :latest index, resolved 2026-10-15
+    container_name: browser
+    restart: unless-stopped
+    shm_size: 1gb
+    ports:
+      # Loopback only; exposed to the tailnet by Caddy (browser.williamwibowo.com). Docker-published ports bypass UFW.
+      # Host 3000 is Grafana, hence 3010. The GUI has a passwordless-sudo terminal: never publish this wider.
+      - "127.0.0.1:3010:3000"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Jakarta
+      - CUSTOM_USER=browser
+      - PASSWORD=${BROWSER_PASSWORD:?set BROWSER_PASSWORD in .env}
+      # Non-default user-data-dir is required: Chrome 136+ ignores the debug port on the default profile.
+      # CDP (9222) stays inside the container (not published); attaching an agent is a follow-up, see README.
+      - CHROME_CLI=--remote-debugging-port=9222 --user-data-dir=/config/chrome-agent
+    volumes:
+      # Logged-in cookies live here: treat as a secret.
+      - browser_config:/config
+
+volumes:
+  browser_config: {}

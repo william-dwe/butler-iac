@@ -1,0 +1,23 @@
+[Unit]
+Description=Write-only API for adding/updating keys in the dotenvx-encrypted .env (behind Caddy /_env/*)
+After=network.target
+
+[Service]
+User=ubuntu
+Group=ubuntu
+# BUTLER_LOGIN + BUTLER_WEB_ORIGIN (ubuntu 0600, rendered by the butler role).
+EnvironmentFile=/home/ubuntu/.config/butler-iac/stack.env
+ExecStart=/usr/bin/python3 /home/ubuntu/services/butler-iac/scripts/env-set-api.py
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ubuntu/services/butler-iac
+ProtectKernelTunables=yes
+RestrictAddressFamilies=AF_INET AF_UNIX
+CapabilityBoundingSet=
+
+[Install]
+WantedBy=multi-user.target
