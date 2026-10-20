@@ -59,7 +59,7 @@ services:
       default: {}
     volumes:
       # Files the agent may attach to forms (resume, photo): playwright-mcp reads uploads from its own filesystem. Read-only.
-      - /home/agentops/workspace/apply-files:/files:ro
+      - /home/agentops/workspace/apply-files:/home/node/files:ro
     depends_on:
       - cdp-bridge
 
