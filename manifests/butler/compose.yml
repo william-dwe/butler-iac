@@ -4,7 +4,7 @@ name: butler
 # Needs BUTLER_* + WIKI_DIR in the environment (see gitops-pull-apply.sh).
 services:
   backend:
-    image: ghcr.io/william-dwe/butler-backend@sha256:e1611b49f52a2bbb0ac2e21f9b09996254aab30081e111dfcac6ec6cfb7d6880
+    image: ghcr.io/william-dwe/butler-backend@sha256:61f71d54ab0b67c1b366caef21cc03e6385c341555023d5306628c71da17caeb
     restart: unless-stopped
     user: "0:0"
     environment:
@@ -38,7 +38,7 @@ services:
       - app-network
 
   frontend:
-    image: ghcr.io/william-dwe/butler-frontend@sha256:36ec45383ecd35dec3ca1c31337d389a150f8b8d391479199a5296f64cb3941c
+    image: ghcr.io/william-dwe/butler-frontend@sha256:4beb4edc3508ada5766ac3dc7cc6902591e76403dd560e63d950752afe808c68
     restart: unless-stopped
     environment:
       BUTLER_API: http://backend:8765
