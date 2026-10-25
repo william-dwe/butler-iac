@@ -17,6 +17,8 @@ services:
       - /home/agentops/data/9router:/app/data
     networks:
       - app-network
+      # Hermes (default network) reaches it as http://9router:20128; the Tailscale IP is unreachable from containers (UFW).
+      - default
 
 networks:
   app-network: {}
