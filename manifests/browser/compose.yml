@@ -58,8 +58,8 @@ services:
         ipv4_address: 172.30.50.11
       default: {}
     volumes:
-      # Files the agent may attach to forms (resume, photo): playwright-mcp reads uploads from its own filesystem. Read-only.
-      - /home/agentops/workspace/apply-files:/home/node/files:ro
+      # Files the agent may attach to forms (resume, photo; repo job-apply-agent, assets/upload): playwright-mcp reads uploads from its own filesystem. Read-only.
+      - /home/agentops/workspace/repos/job-apply-agent/assets/upload:/home/node/files:ro
     depends_on:
       - cdp-bridge
 
