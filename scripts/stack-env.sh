@@ -11,7 +11,10 @@ for v in WIKI_DIR BUTLER_DIR; do
 done
 tmp=$(mktemp "$(dirname "$stack")/.stack.env.XXXXXX")
 trap 'rm -f "$tmp"' EXIT
-{ grep -E '^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY|HERMES_WEBUI_PASSWORD|BROWSER_PASSWORD|FEISHU_[A-Z0-9_]+|TAILSCALE_IP|NINEROUTER_[A-Z0-9_]+|PUBLIC_[A-Z0-9_]+|CLOUDFLARE_[A-Z0-9_]+|R2_[A-Z0-9_]+)=' "$runtime" || true
+# Static list = keys used outside compose (terraform.sh, env-set-api, butler.sh). Compose-referenced keys are added automatically, so
+# a new ${VAR} in a manifest needs no edit here.
+extra=$("$(dirname "$0")/compose-vars.sh" | paste -sd'|' -)
+{ grep -E "^(BUTLER_[A-Z0-9_]+|API_SERVER_KEY|HERMES_WEBUI_PASSWORD|BROWSER_PASSWORD|TAILSCALE_IP|NINEROUTER_[A-Z0-9_]+|PUBLIC_[A-Z0-9_]+|CLOUDFLARE_[A-Z0-9_]+|R2_[A-Z0-9_]+${extra:+|$extra})=" "$runtime" || true
   printf 'WIKI_DIR=%s\nBUTLER_DIR=%s\n' "$WIKI_DIR" "$BUTLER_DIR"; } >"$tmp"
 chown "$owner:$owner" "$tmp"
 chmod 0600 "$tmp"

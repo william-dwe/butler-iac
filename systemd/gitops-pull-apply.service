@@ -8,8 +8,9 @@ After=docker.service network-online.target
 Type=oneshot
 User=ubuntu
 Group=ubuntu
-# Pull first so a new .env is visible, then root (+ ignores User=/NoNewPrivileges) re-renders runtime.env/stack.env if .env changed.
-ExecStartPre=/usr/bin/git -C /home/ubuntu/services/butler-iac pull --ff-only
+# Sync first (fast-forward, or rebase local .env commits onto origin, then push them) so a new .env is visible; then root (+ ignores
+# User=/NoNewPrivileges) re-renders runtime.env/stack.env, reloads units and restarts env-set-api when their inputs changed.
+ExecStartPre=/home/ubuntu/services/butler-iac/scripts/git-sync.sh --push-env
 ExecStartPre=+/home/ubuntu/services/butler-iac/scripts/gitops-env-sync.sh
 ExecStart=/home/ubuntu/services/butler-iac/scripts/gitops-pull-apply.sh
 TimeoutStartSec=30min

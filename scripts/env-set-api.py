@@ -2,7 +2,8 @@
 """Write-only API behind butler.<domain>/_env/*: add or update one key in the dotenvx-encrypted .env.
 
 GET  /_env/keys  -> [{"key": ..., "set": bool}]  names only, never values
-POST /_env/set   -> {"key": ..., "value": ...}   runs `dotenvx set` (public key only), then commits .env locally
+POST /_env/set   -> {"key": ..., "value": ...}   runs `dotenvx set` (public key only), commits .env, then scripts/git-sync.sh
+                                                   --push-env rebases onto origin and pushes it; GitOps applies it within ~1 minute
 
 Runs as ubuntu on loopback; Caddy (private site) injects Tailscale-User-Login. It never reads .env.keys / dotenvx.keys.
 Only keys listed in .env.example are accepted, so a new key needs an .env.example commit first.
@@ -36,12 +37,22 @@ def set_key(key, value, repo=REPO):
     run = subprocess.run(["dotenvx", "set", "-f", ".env", key, "--", value], cwd=repo, capture_output=True, timeout=20)
     if run.returncode:
         return 500, "dotenvx set failed"
-    # Commit only .env: the checkout has unrelated uncommitted work. Local commit, no push (origin is public).
+    # Commit only .env: the checkout has unrelated uncommitted work. The value in .env is dotenvx-encrypted, so pushing it to the public origin is safe.
     commit = subprocess.run(["git", *GIT_ID, "commit", "-q", "-m", f"env: set {key}", "--only", "--", ".env"],
                             cwd=repo, capture_output=True, timeout=20)
     if commit.returncode:
         return 500, "key was set in .env but the commit failed; commit .env manually"
-    return 200, f"{key} saved and committed; applied on the next gitops run"
+    sync = repo / "scripts" / "git-sync.sh"
+    if not os.access(sync, os.X_OK):
+        return 200, f"{key} saved and committed locally (no git-sync.sh to push it)"
+    try:
+        pushed = subprocess.run([str(sync), "--push-env"], cwd=repo, capture_output=True, timeout=90).returncode == 0
+    except subprocess.TimeoutExpired:
+        pushed = False
+    if pushed:
+        return 200, f"{key} saved and pushed; applied by the next gitops run (about a minute)"
+    # The gitops timer runs git-sync.sh --push-env every minute, so a failed push here is retried there.
+    return 200, f"{key} saved and committed; push failed, gitops will retry it"
 
 
 class Handler(BaseHTTPRequestHandler):

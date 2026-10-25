@@ -30,7 +30,7 @@ snap() { docker ps -a --filter "label=com.docker.compose.project" --format '{{.N
 before_rev=$(git -C "$repo" rev-parse --short HEAD)
 before=$(snap || true)
 
-git -C "$repo" pull --ff-only
+"$repo/scripts/git-sync.sh" --push-env
 [ -r "$envfile" ] || { echo "missing $envfile (run butler role)" >&2; exit 1; }
 
 compose=(docker compose --project-directory "$repo" --env-file "$envfile" -f "$repo/docker-compose.yml")

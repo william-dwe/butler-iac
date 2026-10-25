@@ -58,6 +58,27 @@ class EnvSetApiTest(unittest.TestCase):
         self.assertTrue(set(self.before.splitlines()) <= set(after.splitlines()) | {l for l in self.before.splitlines() if l.startswith("FOO_KEY")})
         self.assertFalse((self.repo / ".env.keys").exists())
 
+    def stub_sync(self, exit_code):
+        (self.repo / "scripts").mkdir(exist_ok=True)
+        stub = self.repo / "scripts" / "git-sync.sh"
+        stub.write_text(f'#!/bin/sh\necho "$@" > "{self.repo}/sync-args"\nexit {exit_code}\n')
+        stub.chmod(0o755)
+        return self.repo / "sync-args"
+
+    def test_pushes_through_git_sync_after_committing(self):
+        args = self.stub_sync(0)
+        code, msg = api.set_key("FOO_KEY", "v", self.repo)
+        self.assertEqual(code, 200, msg)
+        self.assertEqual(args.read_text().strip(), "--push-env")
+        self.assertIn("pushed", msg)
+
+    def test_failed_push_still_reports_saved_and_retried_by_gitops(self):
+        self.stub_sync(1)
+        code, msg = api.set_key("FOO_KEY", "v", self.repo)
+        self.assertEqual(code, 200, msg)
+        self.assertTrue(api.is_set("FOO_KEY", self.repo))
+        self.assertIn("push failed, gitops will retry", msg)
+
     def test_rejects_bad_input(self):
         for key, value in [("NOT_LISTED", "v"), ("TAILSCALE_IP", "v"), ("DOTENV_PUBLIC_KEY", "v"), ("FOO_KEY", ""),
                            ("FOO_KEY", "a\nb"), ("FOO_KEY", 5), ("FOO_KEY", "x" * 5000), (None, "v")]:
