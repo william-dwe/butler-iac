@@ -1,0 +1,26 @@
+# Kill the biggest process early instead of letting the 8 GB host thrash in swap until SSH, Tailscale and DNS stop
+# answering (the 2026-10-25 20:25 freeze needed a hard reset). Kills only when available RAM *and* free swap are both
+# under 5% (SIGTERM; SIGKILL at half that), so the usual ~85-90% RAM use does not trigger it. Never touches the
+# daemons we need to stay reachable; prefers browser processes. Kills show up in `journalctl -u earlyoom`.
+- name: Install earlyoom
+  ansible.builtin.apt:
+    name: earlyoom
+    state: present
+
+- name: Configure earlyoom
+  ansible.builtin.copy:
+    dest: /etc/default/earlyoom
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      # Managed by Ansible (roles/common/tasks/earlyoom.yml).
+      EARLYOOM_ARGS="-r 3600 -m 5 -s 5 --avoid '^(sshd|tailscaled|dockerd|containerd|containerd-shim.*|systemd|systemd-journal|systemd-resolve|caddy)$' --prefer '^(chrome|chromium|chromium-browse)$'"
+  register: earlyoom_config
+
+- name: Enable earlyoom
+  ansible.builtin.systemd:
+    name: earlyoom
+    enabled: true
+    state: "{{ 'restarted' if earlyoom_config.changed else 'started' }}"
+  when: not ansible_check_mode

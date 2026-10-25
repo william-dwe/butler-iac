@@ -6,6 +6,10 @@
   ansible.builtin.import_tasks: docker.yml
   tags: [common, docker]
 
+- name: Configure earlyoom
+  ansible.builtin.import_tasks: earlyoom.yml
+  tags: [common, earlyoom]
+
 - name: Configure shell
   ansible.builtin.import_tasks: shell.yml
   tags: [common, shell]
