@@ -89,6 +89,7 @@ systemctl enable --now butler-review-queue.timer
 | `scripts/hermes-sudo.sh on\|off\|status` | Manage Hermes passwordless sudo grant. |
 | `scripts/butler.sh restart\|down\|status\|logs` | Scoped Butler Compose control. Deploy through `ansible-playbook playbooks/services.yml --tags butler-deploy`. |
 | `scripts/dotenv-env.sh render\|status` | Decrypt committed `.env` into `~/.config/butler-iac/runtime.env`, or report setup status without values. |
+| `scripts/gh-secrets-sync.sh [--dry-run] [owner/repo ...]` | Push `vault_butler_iac_app_id/key` from Ansible Vault to the repo's `BUTLER_IAC_APP_ID/KEY` Actions secrets (needed by the `bump` job). Run as `ubuntu`. |
 
 ## Migration (existing VPS)
 
