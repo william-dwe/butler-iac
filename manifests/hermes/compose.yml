@@ -15,10 +15,10 @@ x-hermes: &hermes
     # Same for Hermes (HOME=/opt/data) and omp (HOME=/home/paseo); no per-HOME ~/.ssh needed.
     - GIT_SSH_COMMAND=ssh -i /home/paseo/.ssh/id_ed25519 -o IdentitiesOnly=yes -o UserKnownHostsFile=/home/paseo/.ssh/known_hosts
     # Commit identity for agent commits (distinct from the administrator's, so history shows what the agents wrote).
-    - GIT_AUTHOR_NAME=Hermes Agent
-    - GIT_AUTHOR_EMAIL=hermes@localhost.localdomain
-    - GIT_COMMITTER_NAME=Hermes Agent
-    - GIT_COMMITTER_EMAIL=hermes@localhost.localdomain
+    - GIT_AUTHOR_NAME=Butler Agent
+    - GIT_AUTHOR_EMAIL=butler@williamwibowo.com
+    - GIT_COMMITTER_NAME=Butler Agent
+    - GIT_COMMITTER_EMAIL=butler@williamwibowo.com
 
 services:
   gateway:
