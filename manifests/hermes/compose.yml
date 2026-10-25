@@ -12,6 +12,8 @@ x-hermes: &hermes
     - HERMES_GID=1003
     - API_SERVER_ENABLED=true
     - API_SERVER_KEY=${API_SERVER_KEY:?set API_SERVER_KEY in .env}
+    # Same for Hermes (HOME=/opt/data) and omp (HOME=/home/paseo); no per-HOME ~/.ssh needed.
+    - GIT_SSH_COMMAND=ssh -i /home/paseo/.ssh/id_ed25519 -o IdentitiesOnly=yes -o UserKnownHostsFile=/home/paseo/.ssh/known_hosts
 
 services:
   gateway:
@@ -42,6 +44,8 @@ services:
       - /home/agentops/.omp:/home/paseo/.omp
       - /home/agentops/.pi:/home/paseo/.pi
       - /home/agentops/.agents:/home/paseo/.agents:ro
+      # GitHub SSH identity (the administrator's key, by choice): read-only; git finds it through GIT_SSH_COMMAND below.
+      - /home/agentops/.ssh:/home/paseo/.ssh:ro
   dashboard:
     <<: *hermes
     container_name: hermes-dashboard
@@ -58,6 +62,8 @@ services:
       - /home/agentops/.omp:/home/paseo/.omp
       - /home/agentops/.pi:/home/paseo/.pi
       - /home/agentops/.agents:/home/paseo/.agents:ro
+      # GitHub SSH identity (the administrator's key, by choice): read-only; git finds it through GIT_SSH_COMMAND below.
+      - /home/agentops/.ssh:/home/paseo/.ssh:ro
     ports:
       # Tailscale IP only; Docker-published ports bypass UFW.
       - "${TAILSCALE_IP:?set TAILSCALE_IP}:9119:9119"
