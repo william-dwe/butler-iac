@@ -11,6 +11,8 @@ x-hermes: &hermes
     - HERMES_UID=1003
     - HERMES_GID=1003
     - API_SERVER_ENABLED=true
+    # Write-safe roots (os.pathsep-separated). Keep /opt/data (profiles, skills, notes); repos lets agents edit AGENTS.md etc. in the clones.
+    - HERMES_WRITE_SAFE_ROOT=/opt/data:/home/agentops/workspace/repos
     - API_SERVER_KEY=${API_SERVER_KEY:?set API_SERVER_KEY in .env}
     # Same for Hermes (HOME=/opt/data) and omp (HOME=/home/paseo); no per-HOME ~/.ssh needed.
     - GIT_SSH_COMMAND=ssh -i /home/paseo/.ssh/id_ed25519 -o IdentitiesOnly=yes -o UserKnownHostsFile=/home/paseo/.ssh/known_hosts
