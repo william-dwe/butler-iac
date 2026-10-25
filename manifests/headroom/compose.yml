@@ -8,6 +8,10 @@ services:
     image: ghcr.io/headroomlabs-ai/headroom@sha256:14e3dda1f041eef509af850ac7a32647d1c3e5d9bd66e3e8655dfd3a398273af # 0.38.0
     container_name: headroom
     restart: unless-stopped
+    # Peak ~1.0 GB over 10 days.
+    mem_limit: 1500m
+    memswap_limit: 1500m # = mem_limit: no swap, fail fast instead of thrashing
+    mem_reservation: 900m
     environment:
       # /v1/compress is loopback-only by default; permit the sibling container.
       - HEADROOM_COMPRESS_ALLOW_REMOTE=1

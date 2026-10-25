@@ -10,6 +10,10 @@ services:
     hostname: browser
     restart: unless-stopped
     shm_size: 1gb
+    # Peak ~2.6 GB over 10 days. shm_size counts against this, so ~1 GB is left for Chrome; raise to 2500m if tabs get killed.
+    mem_limit: 2g
+    memswap_limit: 2g # = mem_limit: no swap, fail fast instead of thrashing
+    mem_reservation: 1g
     # Own network, NOT butler_default: Chrome's DevTools port is full control of the logged-in browser, so only
     # playwright-mcp (below) may reach it. Fixed IP because Chrome rejects non-IP Host headers on CDP.
     networks:

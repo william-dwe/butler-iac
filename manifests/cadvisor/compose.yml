@@ -4,6 +4,13 @@ services:
     image: gcr.io/cadvisor/cadvisor@sha256:3de2bd5203120b866d74a9b283b2ffb8ec382fbf9dc321814700c6ea6f44ec57 # v0.55.1; v0.52.x cannot read Docker's containerd image store (no per-container metrics)
     container_name: cadvisor
     restart: unless-stopped
+    # Real process memory is ~60 MB (anon 51 MB, Go heap 41 MB). The ~860 MB seen in Grafana is reclaimable kernel slab/file cache from its
+    # filesystem scans, which the kernel evicts under this limit (cost: more disk re-reads during scans). Watch OOMKilled before lowering further.
+    mem_limit: 500m
+    memswap_limit: 500m # = mem_limit: no swap, fail fast instead of thrashing
+    mem_reservation: 300m
+    environment:
+      - GOMEMLIMIT=300MiB
     privileged: true
     devices:
       - /dev/kmsg
