@@ -21,6 +21,11 @@ x-hermes: &hermes
     - GIT_AUTHOR_EMAIL=butler@williamwibowo.com
     - GIT_COMMITTER_NAME=Butler Agent
     - GIT_COMMITTER_EMAIL=butler@williamwibowo.com
+    # Lark bot (Hermes feishu adapter, websocket mode: no public URL needed). Empty = adapter stays off.
+    - FEISHU_APP_ID=${FEISHU_APP_ID:-}
+    - FEISHU_APP_SECRET=${FEISHU_APP_SECRET:-}
+    - FEISHU_DOMAIN=lark
+    - FEISHU_CONNECTION_MODE=websocket
 
 services:
   gateway:
