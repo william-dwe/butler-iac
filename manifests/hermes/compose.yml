@@ -37,6 +37,11 @@ services:
       - /home/agentops/workspace/research:/home/agentops/workspace/research
       # Dedicated workspace: persistent clones of working repos (e.g. butler-backend).
       - /home/agentops/workspace/repos:/home/agentops/workspace/repos
+      # omp delegation: same binary/state paths as the paseo container, so run it as `HOME=/home/paseo /opt/omp/bin/omp -p ...`.
+      - /opt/omp:/opt/omp:ro
+      - /home/agentops/.omp:/home/paseo/.omp
+      - /home/agentops/.pi:/home/paseo/.pi
+      - /home/agentops/.agents:/home/paseo/.agents:ro
   dashboard:
     <<: *hermes
     container_name: hermes-dashboard
@@ -48,6 +53,11 @@ services:
       - ${WIKI_DIR:?WIKI_DIR is required}:${WIKI_DIR:?WIKI_DIR is required}
       - /home/agentops/workspace/research:/home/agentops/workspace/research
       - /home/agentops/workspace/repos:/home/agentops/workspace/repos
+      # omp delegation: same binary/state paths as the paseo container, so run it as `HOME=/home/paseo /opt/omp/bin/omp -p ...`.
+      - /opt/omp:/opt/omp:ro
+      - /home/agentops/.omp:/home/paseo/.omp
+      - /home/agentops/.pi:/home/paseo/.pi
+      - /home/agentops/.agents:/home/paseo/.agents:ro
     ports:
       # Tailscale IP only; Docker-published ports bypass UFW.
       - "${TAILSCALE_IP:?set TAILSCALE_IP}:9119:9119"
