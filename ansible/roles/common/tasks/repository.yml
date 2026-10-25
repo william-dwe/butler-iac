@@ -16,11 +16,21 @@
     - gitops-pull-apply.service
     - gitops-pull-notify.service
     - gitops-pull-apply.timer
+    - resource-alert.service
+    - resource-alert.timer
   register: gitops_units
 
 - name: Enable GitOps pull-apply timer
   ansible.builtin.systemd:
     name: gitops-pull-apply.timer
+    enabled: true
+    state: started
+    daemon_reload: "{{ gitops_units.changed }}"
+
+# Disk/memory >= 90% alert to Telegram (scripts/resource-alert.sh), same Hermes `send` path as the GitOps alerts.
+- name: Enable resource alert timer
+  ansible.builtin.systemd:
+    name: resource-alert.timer
     enabled: true
     state: started
     daemon_reload: "{{ gitops_units.changed }}"
