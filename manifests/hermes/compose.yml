@@ -11,6 +11,9 @@ x-hermes: &hermes
     - HERMES_UID=1003
     - HERMES_GID=1003
     - API_SERVER_ENABLED=true
+    # Gateway API listens only on its address in the private hermes-api network (not 0.0.0.0, which would also open it on butler_default).
+    # Only the gateway and hermes-webui are on that network; the dashboard runs no API server.
+    - API_SERVER_HOST=172.30.60.2
     # Write-safe roots (os.pathsep-separated). Keep /opt/data (profiles, skills, notes); repos lets agents edit AGENTS.md etc. in the clones.
     - HERMES_WRITE_SAFE_ROOT=/opt/data:/home/agentops/workspace/repos
     - API_SERVER_KEY=${API_SERVER_KEY:?set API_SERVER_KEY in .env}
@@ -34,13 +37,16 @@ services:
     command: ["gateway", "run"]
     healthcheck:
       # ponytail: python from image venv, curl presence unverified.
-      test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8642/health', timeout=3)"]
+      test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request as u; u.urlopen('http://172.30.60.2:8642/health', timeout=3)"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 60s
-    # 8642 stays unpublished: API key only protects it if not exposed.
-    networks: [default]
+    # 8642 stays unpublished and is reachable only over hermes-api (gateway + webui); the API key still guards it.
+    networks:
+      default:
+      hermes-api:
+        ipv4_address: 172.30.60.2
     volumes:
       - /home/agentops/.hermes:/opt/data
       # Butler wiki + task DB for scripts/butler-review-queue.sh (librarian runs inside this container).
@@ -112,7 +118,7 @@ services:
       - UV_PYTHON=3.14
       - HERMES_WEBUI_PASSWORD=${HERMES_WEBUI_PASSWORD:?set HERMES_WEBUI_PASSWORD in .env}
       # Tasks/cron health probe against the gateway API (8642 stays unpublished).
-      - HERMES_API_URL=http://hermes-gateway:8642
+      - HERMES_API_URL=http://172.30.60.2:8642
       # Run browser chat turns on the gateway (same mounts/env/tools as the dashboard) instead of in-process in this container.
       - HERMES_WEBUI_CHAT_BACKEND=gateway
       - HERMES_WEBUI_GATEWAY_API_KEY=${API_SERVER_KEY:?set API_SERVER_KEY in .env}
@@ -128,7 +134,14 @@ services:
       timeout: 5s
       retries: 3
       start_period: 60s
-    networks: [default]
+    networks: [default, hermes-api]
 
 volumes:
   hermes-agent-src:
+
+networks:
+  hermes-api:
+    # Private link between the gateway API (:8642) and hermes-webui's gateway chat backend. Keep other services off it.
+    ipam:
+      config:
+        - subnet: 172.30.60.0/24
