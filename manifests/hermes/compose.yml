@@ -113,6 +113,8 @@ services:
       - HERMES_WEBUI_PASSWORD=${HERMES_WEBUI_PASSWORD:?set HERMES_WEBUI_PASSWORD in .env}
       # Tasks/cron health probe against the gateway API (8642 stays unpublished).
       - HERMES_API_URL=http://hermes-gateway:8642
+      # Run browser chat turns on the gateway (same mounts/env/tools as the dashboard) instead of in-process in this container.
+      - HERMES_WEBUI_CHAT_BACKEND=gateway
       - HERMES_WEBUI_GATEWAY_API_KEY=${API_SERVER_KEY:?set API_SERVER_KEY in .env}
     volumes:
       - /home/agentops/.hermes:/home/hermeswebui/.hermes
